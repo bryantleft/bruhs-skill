@@ -1,0 +1,259 @@
+---
+description: Plan + Build a feature end-to-end
+---
+
+# cook - Plan + Build Features
+
+Combined planning and building workflow. Wraps brainstorming and feature development patterns into a single end-to-end flow.
+
+## Invocation
+
+- `/bruhs:cook <feature>` - Start cooking a specific feature
+- `/bruhs:cook` - Interactive mode, will ask what to build
+
+## Core Principles
+
+All code produced by cook follows these principles:
+
+| Principle | Description |
+|-----------|-------------|
+| **Atomic Design** | Hierarchical component architecture (atoms → molecules → organisms → templates → pages) |
+| **Clean** | Simple, readable, maintainable code |
+| **Immutability** | Predictable state and data flow |
+| **Scalable** | Architecture that grows with your needs |
+| **Maintainable** | Long-term sustainability and extensibility |
+| **Single Source of Truth** | One authoritative source for each piece of data |
+
+## Workflow
+
+### Step 1: Understand
+
+Clarify what we're building:
+
+1. Parse the feature request
+2. Ask clarifying questions if needed:
+   - What's the user story?
+   - What are the acceptance criteria?
+   - Any constraints or preferences?
+
+Output a brief summary:
+```
+Feature: <name>
+Goal: <what it achieves>
+Scope: <what's included/excluded>
+```
+
+### Step 2: Explore
+
+Launch code-explorer agents to understand the codebase:
+
+```
+Exploring codebase...
+- Found: <relevant file 1>
+- Found: <relevant file 2>
+- Pattern: <existing pattern that applies>
+```
+
+Use the Task tool with `subagent_type: "feature-dev:code-explorer"` to:
+- Find related code
+- Understand existing patterns
+- Map dependencies
+- Identify integration points
+
+### Step 3: Plan
+
+Design 2-3 approaches based on exploration:
+
+```
+Planning...
+
+**Approach 1: <name>**
+- Description: <how it works>
+- Files to modify: <list>
+- Pros: <benefits>
+- Cons: <tradeoffs>
+
+**Approach 2: <name>**
+- Description: <how it works>
+- Files to modify: <list>
+- Pros: <benefits>
+- Cons: <tradeoffs>
+
+Which approach? [1/2]
+```
+
+Use brainstorming patterns:
+- Consider multiple solutions
+- Evaluate tradeoffs
+- Present options clearly
+- Let user choose
+
+### Step 4: Setup
+
+Prepare the working environment:
+
+**Check for unrelated changes:**
+```bash
+git status
+git diff --stat
+```
+
+If there are uncommitted changes unrelated to the feature:
+```bash
+git stash push -m "bruhs: stashed before <feature-name>"
+```
+
+Track that we stashed:
+```
+stashed_changes = true
+```
+
+**Important:** Do NOT create a branch here. Branch creation happens in `/bruhs:yeet` after code is complete.
+
+### Step 5: Build
+
+Implement the feature using TDD where applicable:
+
+**For testable code:**
+1. Write failing test
+2. Implement minimum code to pass
+3. Refactor
+4. Repeat
+
+**For UI/non-testable code:**
+1. Implement component/feature
+2. Manual verification
+3. Refactor
+
+Use feature-dev patterns:
+- Follow existing code conventions
+- Apply atomic design for components
+- Maintain single source of truth
+- Keep functions pure where possible
+
+**Progress output:**
+```
+Building...
+✓ Created <file>
+✓ Modified <file>
+✓ Added tests for <feature>
+✓ All tests passing
+```
+
+### Step 6: Review
+
+Launch code-reviewer agents to check the implementation:
+
+Use the Task tool with `subagent_type: "feature-dev:code-reviewer"` to:
+- Check for bugs
+- Verify logic
+- Look for security issues
+- Ensure code quality
+- Check adherence to project conventions
+
+```
+Reviewing...
+✓ No high-confidence issues found
+```
+
+Or if issues found:
+```
+Reviewing...
+⚠ Found issues:
+  - <issue 1>
+  - <issue 2>
+
+Fixing...
+✓ Fixed <issue 1>
+✓ Fixed <issue 2>
+```
+
+### Step 7: Ready to Ship
+
+Signal completion and prompt for shipping:
+
+```
+Ready to ship! Run /bruhs:yeet to create ticket and PR.
+```
+
+If we stashed changes:
+```
+Ready to ship! Run /bruhs:yeet to create ticket and PR.
+💡 You have stashed changes from before this feature (git stash pop to restore)
+```
+
+## Example
+
+```
+> /bruhs:cook add leaderboard to game page
+
+Understanding...
+Feature: Leaderboard
+Goal: Show top AI agents by win rate on game page
+Scope: Game page UI only, uses existing agentStats data
+
+Exploring codebase...
+- Found: app/game/[matchId]/page.tsx (game page)
+- Found: lib/db/schema.ts (agentStats table)
+- Found: app/stats/page.tsx (existing stats UI patterns)
+- Found: components/ui/card.tsx (card component)
+- Pattern: Server components with TanStack Query for data
+
+Planning...
+
+**Approach 1: Inline LeaderboardCard**
+- Add LeaderboardCard component to game page
+- Query agentStats directly in server component
+- Files: app/game/[matchId]/page.tsx, components/game/leaderboard-card.tsx
+- Pros: Simple, fast to implement, follows existing patterns
+- Cons: Couples game page to stats data
+
+**Approach 2: Separate route + embed**
+- Create /leaderboard route
+- Import component into game page
+- Files: app/leaderboard/page.tsx, components/leaderboard.tsx, app/game/[matchId]/page.tsx
+- Pros: Reusable, standalone page option
+- Cons: More files, extra complexity
+
+Which approach? [1]
+
+> 1
+
+Setting up...
+✓ Working directory clean (no stash needed)
+
+Building...
+✓ Created components/game/leaderboard-card.tsx
+✓ Added getTopAgents query to lib/db/queries.ts
+✓ Modified app/game/[matchId]/page.tsx
+✓ Added tests for leaderboard-card
+✓ All tests passing
+
+Reviewing...
+✓ No high-confidence issues found
+
+Ready to ship! Run /bruhs:yeet to create ticket and PR.
+```
+
+## Integration with Other Skills
+
+| Phase | Pattern Source |
+|-------|----------------|
+| Plan | `superpowers:brainstorming` patterns |
+| Build | `feature-dev:feature-dev` patterns |
+| Review | `superpowers:requesting-code-review` patterns |
+
+Cook implements its own workflow but draws on these established patterns.
+
+## Configuration
+
+Reads `.claude/bruhs.json` for:
+- Stack info (to understand project conventions)
+- Linear config (for ticket references if needed)
+
+## Tips
+
+- **Be specific** - "add dark mode" is okay, "add dark mode toggle to header with system preference detection" is better
+- **Start small** - Cook works best for focused features, not massive rewrites
+- **Trust the review** - If code-reviewer finds issues, fix them before shipping
+- **Use /bruhs:yeet** - Don't manually commit after cook, let yeet handle the full shipping workflow

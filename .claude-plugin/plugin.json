@@ -1,0 +1,12 @@
+{
+  "name": "bruhs",
+  "description": "Opinionated development lifecycle - spawn projects, cook features, yeet to ship",
+  "version": "1.0.0",
+  "author": {
+    "name": "Bryan Tle",
+    "email": "bryan@perdixlabs.com"
+  },
+  "repository": "https://github.com/perdixlabs/bruhs",
+  "license": "MIT",
+  "keywords": ["workflow", "linear", "git", "scaffolding", "development"]
+}
