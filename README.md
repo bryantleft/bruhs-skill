@@ -83,7 +83,7 @@ Create `.claude/bruhs.json` in your project:
     "linear": {
       "team": "Your Team",
       "project": "Your Project",
-      "labelMapping": {
+      "labels": {
         "feat": "Feature",
         "fix": "Bug",
         "chore": "Chore",

@@ -194,7 +194,7 @@ Create `.claude/bruhs.json` with selected configuration:
     "linear": {
       "team": "<linear-team>",
       "project": "<linear-project>",
-      "labelMapping": {
+      "labels": {
         "feat": "Feature",
         "fix": "Bug",
         "chore": "Chore",

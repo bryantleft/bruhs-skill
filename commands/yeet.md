@@ -76,19 +76,22 @@ Load Linear MCP tools and create issue:
 ToolSearch("select:mcp__linear__create_issue")
 ToolSearch("select:mcp__linear__list_issue_labels")
 
-// Get labels for the team
-labels = mcp__linear__list_issue_labels({ teamId: config.linear.team })
+// Fetch available labels from Linear (dynamic)
+availableLabels = mcp__linear__list_issue_labels({ teamId: config.integrations.linear.team })
 
-// Map change type to label
-labelId = findLabel(labels, config.linear.labelMapping[changeType])
+// Get the label name from config (e.g., "feat" -> "Feature")
+labelName = config.integrations.linear.labels[changeType]
 
-// Create issue
+// Find matching label in available labels (case-insensitive)
+labelId = availableLabels.find(l => l.name.toLowerCase() === labelName.toLowerCase())?.id
+
+// Create issue (auto-assigns to current user)
 issue = mcp__linear__create_issue({
   title: generatedTitle,
-  teamId: config.linear.team,
-  projectId: config.linear.project,
-  labelIds: [labelId],
-  assigneeId: "me"  // Auto-assign to current user
+  teamId: config.integrations.linear.team,
+  projectId: config.integrations.linear.project,
+  labelIds: labelId ? [labelId] : [],
+  assigneeId: "me"
 })
 
 // Capture the branch name Linear generates
@@ -239,7 +242,7 @@ Reads `.claude/bruhs.json`:
     "linear": {
       "team": "Perdix Labs",
       "project": "Gambit",
-      "labelMapping": {
+      "labels": {
         "feat": "Feature",
         "fix": "Bug",
         "chore": "Chore",
@@ -249,6 +252,8 @@ Reads `.claude/bruhs.json`:
   }
 }
 ```
+
+The `labels` map commit types to Linear label names. At runtime, yeet fetches available labels from Linear and matches by name.
 
 ## Git-Only Mode
 
