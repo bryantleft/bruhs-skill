@@ -10,7 +10,7 @@ When invoked, ask the user which command to run:
 ```
 What do you want to do?
 ○ spawn - Create new project or add to monorepo
-○ init - Initialize config for existing project
+○ claim - Claim existing project for bruhs
 ○ cook - Plan + Build a feature end-to-end
 ○ yeet - Ship: Linear ticket → Branch → Commit → PR
 ○ dip - Clean up after merge and switch to base branch
@@ -18,7 +18,7 @@ What do you want to do?
 
 Present these options interactively, then follow the corresponding command file:
 - **spawn** → Read and follow `commands/spawn.md`
-- **init** → Read and follow `commands/init.md`
+- **claim** → Read and follow `commands/claim.md`
 - **cook** → Read and follow `commands/cook.md`
 - **yeet** → Read and follow `commands/yeet.md`
 - **dip** → Read and follow `commands/dip.md`
@@ -27,7 +27,7 @@ Present these options interactively, then follow the corresponding command file:
 
 Users can also specify directly:
 - `/bruhs spawn` or `/bruhs spawn <name>`
-- `/bruhs init`
+- `/bruhs claim`
 - `/bruhs cook` or `/bruhs cook <feature>`
 - `/bruhs yeet`
 - `/bruhs dip`

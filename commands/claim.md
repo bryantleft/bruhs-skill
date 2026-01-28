@@ -1,14 +1,14 @@
 ---
-description: Initialize bruhs config for existing projects
+description: Claim an existing project for bruhs
 ---
 
-# init - Initialize Config
+# claim - Claim Existing Project
 
 Set up `.claude/bruhs.json` for an existing project. Use this when you have a project that wasn't created with `/bruhs spawn`.
 
 ## Invocation
 
-- `/bruhs init` - Initialize config for current project
+- `/bruhs claim` - Claim current project for bruhs
 
 ## Prerequisites
 
@@ -213,7 +213,7 @@ Ready! You can now use /bruhs cook and /bruhs yeet.
 ## Example
 
 ```
-> /bruhs init
+> /bruhs claim
 
 Checking for existing config...
 ✓ No existing config found

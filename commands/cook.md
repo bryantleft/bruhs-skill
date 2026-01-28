@@ -35,14 +35,14 @@ ls .claude/bruhs.json 2>/dev/null
 If config doesn't exist:
 ```
 No bruhs.json found. Would you like to:
-○ Run /bruhs init (recommended) - Full setup with stack detection
+○ Run /bruhs claim (recommended) - Full setup with stack detection
 ○ Continue without config - Will skip Linear integration
 ```
 
 If user chooses to continue without config:
 - Skip Linear-related features
 - Use sensible defaults for stack detection
-- Remind user at end: "Run /bruhs init to enable full features"
+- Remind user at end: "Run /bruhs claim to enable full features"
 
 ### Step 1: Understand
 
