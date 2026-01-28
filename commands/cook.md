@@ -289,7 +289,33 @@ Scope: <what's included/excluded>
 
 ### Step 2: Explore
 
-Launch code-explorer agents to understand the codebase:
+**Search for relevant skills:**
+
+Based on the feature requirements and detected stack, search for skills that might help:
+
+```javascript
+// Identify libraries/technologies involved in the feature
+// Examples: shadcn, ai-sdk, tanstack-query, drizzle, stripe, etc.
+
+// Search for matching skills
+Skill("find-skills")
+
+// Or check specific known skills:
+// - shadcn → mcp__shadcn__* tools for component installation
+// - ai-sdk → vercel-ai-sdk patterns
+// - auth → better-auth-best-practices
+// - react → vercel-react-best-practices
+```
+
+```
+Checking for relevant skills...
+✓ Found: shadcn (component library tools)
+✓ Found: vercel-react-best-practices
+```
+
+If skills are found, load them to inform the planning and building phases.
+
+**Launch code-explorer agents to understand the codebase:**
 
 ```
 Exploring codebase...
@@ -447,6 +473,7 @@ Use feature-dev patterns:
 - Apply atomic design for components
 - Maintain single source of truth
 - Keep functions pure where possible
+- **Follow any skills loaded in Step 2** (shadcn, ai-sdk, etc.)
 
 **Progress output:**
 ```
