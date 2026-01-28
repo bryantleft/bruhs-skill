@@ -231,7 +231,43 @@ cat ~/.claude/settings.json | jq '.enabledPlugins | keys'  # Enabled plugins
 
 The `tooling` section stores what's recommended for this project. New devs can compare against their setup and install missing ones.
 
-### Step 8: Setup GitHub Actions
+### Step 8: Recommend Skills (using find-skills)
+
+Use `find-skills` to recommend relevant skills based on selected stack:
+
+```javascript
+// Search for skills matching the selected framework/stack
+Skill("find-skills", `${framework} best practices`)  // e.g., "nextjs best practices"
+
+// Also search for specific stack items
+for (item of selectedStack) {
+  Skill("find-skills", item)  // e.g., "drizzle", "tailwind", "zustand"
+}
+```
+
+Present recommendations:
+```
+Found relevant skills for your stack:
+
+Framework:
+  ☐ vercel-react-best-practices (58K installs)
+  ☐ vercel-composition-patterns (3K installs)
+
+Styling:
+  ☐ web-design-guidelines (45K installs)
+
+Database:
+  ☐ supabase-postgres-best-practices (6K installs)
+
+Install selected? [Y/n]
+```
+
+Install selected skills:
+```bash
+npx skills add <owner/repo> --skill <skill-name>
+```
+
+### Step 9: Setup GitHub Actions
 
 Create `.github/workflows/ci.yml` with Blacksmith runner:
 
@@ -270,7 +306,7 @@ Adjust based on language:
 - Rust: Use `cargo` commands
 - Luau: Use `selene` and `stylua`
 
-### Step 9: Initial Commit
+### Step 10: Initial Commit
 
 ```bash
 git init  # if new project
