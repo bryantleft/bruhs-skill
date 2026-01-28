@@ -359,10 +359,44 @@ stashed_changes = true
 Implement the feature using TDD where applicable:
 
 **For testable code:**
-1. Write failing test
+
+First, check if project has a test suite:
+```bash
+# Look for test config files
+ls vitest.config.* jest.config.* pytest.ini 2>/dev/null
+# Check for test directories
+ls -d __tests__ tests test spec 2>/dev/null
+```
+
+**If test suite exists:**
+1. Write failing test (will be kept)
 2. Implement minimum code to pass
 3. Refactor
 4. Repeat
+
+```
+testSuiteExists = true
+```
+
+**If no test suite:**
+1. Create temporary test file to verify logic
+2. Implement minimum code to pass
+3. Verify tests pass
+4. Delete temporary test file when done
+
+```
+testSuiteExists = false
+tempTestFiles = ["<path-to-temp-test>"]
+```
+
+Cleanup at end of Step 6:
+```javascript
+if (!testSuiteExists && tempTestFiles.length > 0) {
+  // Remove temporary test files
+  tempTestFiles.forEach(f => rm(f))
+  console.log("✓ Cleaned up temporary test files")
+}
+```
 
 **For UI/non-testable code:**
 
@@ -420,8 +454,18 @@ Building...
 ✓ Dev server running on :<detected-port>
 ✓ Created <file>
 ✓ Modified <file>
-✓ Added tests for <feature>
+✓ Added tests for <feature>        # kept if test suite exists
 ✓ All tests passing
+```
+
+Or for projects without test suite:
+```
+Building...
+✓ Created <file>
+✓ Modified <file>
+✓ Created temporary tests to verify logic
+✓ All tests passing
+✓ Cleaned up temporary test files   # after Step 6
 ```
 
 ### Step 6: Review
@@ -476,13 +520,19 @@ Fixing...
 ✓ Fixed <issue 2>
 ```
 
-**Cleanup dev server (if we started it):**
+**Cleanup:**
 
 ```javascript
-// Only kill if we started it - don't touch user's existing server
+// Kill dev server only if we started it
 if (devServerStartedByUs) {
   kill(devServerPid)
   console.log("✓ Stopped dev server")
+}
+
+// Remove temporary test files only if no test suite existed
+if (!testSuiteExists && tempTestFiles.length > 0) {
+  tempTestFiles.forEach(f => rm(f))
+  console.log("✓ Cleaned up temporary test files")
 }
 ```
 
