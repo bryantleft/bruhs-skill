@@ -40,16 +40,27 @@ How would you like to proceed?
 ○ Abort - Stay on current branch
 ```
 
-### Step 2: Get Base Branch from Config
+### Step 2: Detect Base Branch
 
-Read `.claude/bruhs.json`:
+Detect the base branch automatically (with optional config override):
 
-```javascript
-config = JSON.parse(fs.readFileSync('.claude/bruhs.json'))
-baseBranch = config.git?.baseBranch || 'main'
+```bash
+# Check config first (optional override)
+configBranch = config.git?.baseBranch
+
+# If not configured, detect from remote
+if (!configBranch) {
+  baseBranch = $(gh repo view --json defaultBranchRef -q '.defaultBranchRef.name')
+  # Fallback if gh not available
+  if (!baseBranch) {
+    baseBranch = $(git remote show origin | grep "HEAD branch" | cut -d: -f2 | xargs)
+  }
+} else {
+  baseBranch = configBranch
+}
 ```
 
-If no config, default to `main`.
+This automatically detects `main`, `master`, `dev`, or whatever the repo's default branch is.
 
 ### Step 3: Switch to Base Branch
 
@@ -124,19 +135,19 @@ Ready for your next feature! Run /bruhs cook to start.
 
 ## Configuration
 
-Add to `.claude/bruhs.json`:
+The base branch is auto-detected from the remote. Optionally override in `.claude/bruhs.json`:
 
 ```json
 {
   "git": {
-    "baseBranch": "main"
+    "baseBranch": "dev"
   }
 }
 ```
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `baseBranch` | `main` | Branch to switch to after cleanup |
+| `baseBranch` | (auto-detect) | Override branch to switch to after cleanup |
 
 ## Examples
 
