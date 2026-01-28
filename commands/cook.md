@@ -397,6 +397,12 @@ pnpm --filter <app-name> dev &
 pnpm dev &
 ```
 
+Track that we started it:
+```
+devServerStartedByUs = true
+devServerPid = <pid>
+```
+
 Then:
 1. Implement component/feature
 2. Verify in browser (see Step 6)
@@ -468,6 +474,16 @@ Reviewing...
 Fixing...
 ✓ Fixed <issue 1>
 ✓ Fixed <issue 2>
+```
+
+**Cleanup dev server (if we started it):**
+
+```javascript
+// Only kill if we started it - don't touch user's existing server
+if (devServerStartedByUs) {
+  kill(devServerPid)
+  console.log("✓ Stopped dev server")
+}
 ```
 
 ### Step 7: Ready to Ship
