@@ -13,7 +13,7 @@ npx skills add bryantleft/bruhs-skills
 ```bash
 /bruhs              # Interactive selection
 /bruhs spawn        # Create new project or add to monorepo
-/bruhs claim         # Initialize config for existing project
+/bruhs claim        # Initialize config for existing project
 /bruhs cook         # Plan + Build a feature end-to-end
 /bruhs yeet         # Ship: Linear ticket → Branch → Commit → PR
 /bruhs dip          # Clean up after merge and switch to base branch
