@@ -90,6 +90,8 @@ try {
 
 **First, check if ticket context exists from cook:**
 
+The ticket context lives in conversation memory - if cook ran earlier in the same session with a ticket ID, that context is available here.
+
 ```javascript
 // If cook passed ticket context (started from a ticket ID), use it
 if (ticketContext) {
@@ -101,6 +103,9 @@ if (ticketContext) {
   // Skip ticket creation
   return
 }
+
+// Note: If user started a new conversation after cook, context is lost
+// and we'll create a new ticket below (which is fine)
 ```
 
 **If no existing ticket, create one:**

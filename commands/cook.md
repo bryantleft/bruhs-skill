@@ -432,11 +432,9 @@ If we stashed changes:
 💡 You have stashed changes from before this feature (git stash pop to restore)
 ```
 
-**Important:** When handing off to yeet, pass the ticket context if it exists:
-```javascript
-// If ticketContext exists from Step 1, pass it to yeet
-// yeet will skip ticket creation and use existing ticket info
-```
+**Important:** The ticket context is stored in conversation memory. When yeet runs in the same session, it will have access to `ticketContext` from Step 1 and skip ticket creation.
+
+If the user starts a new conversation before running yeet, the context is lost and yeet will create a new ticket as normal.
 
 ## Examples
 
