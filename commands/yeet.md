@@ -19,6 +19,25 @@ Ship code that's ready to go. Creates Linear ticket, commits, pushes, and opens 
 
 ## Workflow
 
+### Step 0: Check Config
+
+```bash
+ls .claude/bruhs.json 2>/dev/null
+```
+
+If config doesn't exist:
+```
+No bruhs.json found. Would you like to:
+○ Run /bruhs init (recommended) - Full setup with Linear integration
+○ Continue in git-only mode - Commit and PR without Linear tickets
+```
+
+If user chooses git-only mode:
+- Skip all Linear steps (ticket creation, status updates)
+- Generate branch names from change type: `<type>/<short-description>`
+- Commit without ticket reference
+- Remind user at end: "Run /bruhs init to enable Linear integration"
+
 ### Step 1: Check for Changes
 
 ```bash

@@ -13,11 +13,24 @@ npx skills add bryantleft/bruhs-skills
 ```bash
 /bruhs              # Interactive selection
 /bruhs spawn        # Create new project or add to monorepo
+/bruhs init         # Initialize config for existing project
 /bruhs cook         # Plan + Build a feature end-to-end
 /bruhs yeet         # Ship: Linear ticket → Branch → Commit → PR
 ```
 
 ## Commands
+
+### `/bruhs init`
+
+Initialize bruhs config for an existing project.
+
+**Features:**
+- Auto-detects stack from project files (framework, styling, database, etc.)
+- Configures Linear integration (team, project, labels)
+- Detects installed MCPs and plugins from Claude settings
+- Creates `.claude/bruhs.json`
+
+Use this when you have a project that wasn't created with `/bruhs spawn`.
 
 ### `/bruhs spawn`
 
