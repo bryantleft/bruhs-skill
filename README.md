@@ -89,6 +89,8 @@ Create `.claude/bruhs.json` in your project:
       "refactor": "Improvement"
     }
   },
+  "mcps": ["linear", "notion", "context7"],
+  "plugins": ["superpowers", "commit-commands", "feature-dev"],
   "stack": {
     "structure": "turborepo",
     "framework": "nextjs",
@@ -98,6 +100,9 @@ Create `.claude/bruhs.json` in your project:
   }
 }
 ```
+
+- **mcps** - MCP servers used by the project (for onboarding/setup)
+- **plugins** - Claude Code plugins used by the project
 
 ## Dependencies
 
