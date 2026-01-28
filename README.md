@@ -16,6 +16,7 @@ npx skills add bryantleft/bruhs-skills
 /bruhs init         # Initialize config for existing project
 /bruhs cook         # Plan + Build a feature end-to-end
 /bruhs yeet         # Ship: Linear ticket → Branch → Commit → PR
+/bruhs dip          # Clean up after merge and switch to base branch
 ```
 
 ## Commands
@@ -80,12 +81,27 @@ Ship code with Linear integration.
 
 **Git-only mode:** Works without Linear - just skips ticket management.
 
+### `/bruhs dip`
+
+Clean up after merging and switch to base branch.
+
+**Workflow:**
+1. Switch to configured base branch (main/dev)
+2. Pull latest changes
+3. Delete merged feature branch (local + remote)
+4. Restore stashed changes from cook (if any)
+
+Use this after your PR is merged to start fresh for the next feature.
+
 ## Configuration
 
 Create `.claude/bruhs.json` in your project:
 
 ```json
 {
+  "git": {
+    "baseBranch": "main"
+  },
   "integrations": {
     "linear": {
       "team": "Your Team",
@@ -112,6 +128,7 @@ Create `.claude/bruhs.json` in your project:
 }
 ```
 
+- **git** - Git workflow settings (baseBranch for dip command)
 - **integrations** - Config for external services (Linear, GitHub, etc.)
 - **tooling** - Recommended MCPs and plugins (auto-detected at setup)
 - **stack** - Tech stack choices

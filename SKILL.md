@@ -13,6 +13,7 @@ What do you want to do?
 ○ init - Initialize config for existing project
 ○ cook - Plan + Build a feature end-to-end
 ○ yeet - Ship: Linear ticket → Branch → Commit → PR
+○ dip - Clean up after merge and switch to base branch
 ```
 
 Present these options interactively, then follow the corresponding command file:
@@ -20,6 +21,7 @@ Present these options interactively, then follow the corresponding command file:
 - **init** → Read and follow `commands/init.md`
 - **cook** → Read and follow `commands/cook.md`
 - **yeet** → Read and follow `commands/yeet.md`
+- **dip** → Read and follow `commands/dip.md`
 
 ## Quick Access
 
@@ -28,5 +30,6 @@ Users can also specify directly:
 - `/bruhs init`
 - `/bruhs cook` or `/bruhs cook <feature>`
 - `/bruhs yeet`
+- `/bruhs dip`
 
 If an argument is provided, skip the selection and go directly to that command.
