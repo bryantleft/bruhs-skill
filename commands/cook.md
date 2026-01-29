@@ -12,210 +12,33 @@ Combined planning and building workflow. Wraps brainstorming and feature develop
 - `/bruhs cook <TICKET-ID>` - Fetch Linear ticket and start working on it (e.g., `PERDIX-123`)
 - `/bruhs cook` - Interactive mode, will ask what to build
 
-## Core Principles
+## Best Practices
 
-All code produced by cook follows these principles:
+All code produced by cook follows the patterns defined in:
+
+- **`practices/_common.md`** - Universal patterns (naming, git, errors, testing)
+- **`practices/typescript-react.md`** - TypeScript + React specific patterns
+
+**Key principles:**
 
 | Principle | Description |
 |-----------|-------------|
-| **Atomic Design** | Hierarchical component architecture (atoms → molecules → organisms → templates → pages) |
-| **Clean** | Simple, readable, maintainable code |
-| **Immutability** | Predictable state and data flow |
-| **Scalable** | Architecture that grows with your needs |
-| **Maintainable** | Long-term sustainability and extensibility |
+| **KISS** | Keep It Simple, Stupid |
+| **YAGNI** | You Ain't Gonna Need It |
 | **Single Source of Truth** | One authoritative source for each piece of data |
+| **Atomic Design** | Hierarchical components: atoms → molecules → organisms |
 
-## React 19+ Best Practices
+**Before writing code, review the practices file for your stack.** The practices define:
+- What patterns to follow (DO)
+- What anti-patterns to avoid (DON'T)
+- Quick reference checklists
 
-When the stack includes React/Next.js, follow these modern patterns. These override legacy patterns you may have learned.
-
-### Server Components First
-
-Components are Server Components by default. Only add `"use client"` when you need:
-- Event handlers (`onClick`, `onChange`)
-- Browser APIs (`localStorage`, `window`)
-- Hooks that use state (`useState`, `useReducer`)
-
-```tsx
-// ✅ Server Component (default) - fetch data directly
-async function UserProfile({ userId }: { userId: string }) {
-  const user = await db.users.find(userId);
-  return <div>{user.name}</div>;
-}
-
-// ✅ Client Component - only when needed
-"use client";
-function LikeButton() {
-  const [liked, setLiked] = useState(false);
-  return <button onClick={() => setLiked(!liked)}>Like</button>;
-}
-```
-
-### Data Fetching Hierarchy
-
-Use the right tool for each layer:
-
-| Layer | Tool | When |
-|-------|------|------|
-| Server Components | `async/await` | Initial page data, SEO-critical content |
-| Client (streaming) | `use()` hook | Non-critical data passed as promise from server |
-| Client (interactive) | TanStack Query | Mutations, polling, user-triggered fetches |
-
-```tsx
-// Server Component - fetch critical data
-async function ProductPage({ id }: { id: string }) {
-  const product = await getProduct(id);           // Blocks render
-  const reviewsPromise = getReviews(id);          // Start but don't await
-
-  return (
-    <div>
-      <ProductDetails product={product} />
-      <Suspense fallback={<Skeleton />}>
-        <Reviews reviewsPromise={reviewsPromise} />  {/* Stream to client */}
-      </Suspense>
-    </div>
-  );
-}
-
-// Client Component - use() for streamed data
-"use client";
-function Reviews({ reviewsPromise }: { reviewsPromise: Promise<Review[]> }) {
-  const reviews = use(reviewsPromise);  // Suspends until resolved
-  return <ReviewList reviews={reviews} />;
-}
-```
-
-### Avoid useEffect
-
-**useEffect is not deprecated, but it's rarely the right choice.** Before using `useEffect`, check this table:
-
-| You want to... | Use instead |
-|----------------|-------------|
-| Transform data for render | Calculate during render (derive from props/state) |
-| Cache expensive calculations | `useMemo` |
-| Reset state when prop changes | `key` prop on component |
-| Fetch data | Server Components, `use()` hook, or TanStack Query |
-| Handle user events | Event handlers directly |
-| Subscribe to external store | `useSyncExternalStore` |
-| Run code once on mount | Top-level module code or ref flag |
-
-```tsx
-// ❌ Anti-pattern: useEffect for derived state
-const [fullName, setFullName] = useState('');
-useEffect(() => {
-  setFullName(firstName + ' ' + lastName);
-}, [firstName, lastName]);
-
-// ✅ Correct: derive during render
-const fullName = firstName + ' ' + lastName;
-
-// ❌ Anti-pattern: useEffect for data fetching
-useEffect(() => {
-  fetch('/api/user').then(r => r.json()).then(setUser);
-}, []);
-
-// ✅ Correct: Server Component or TanStack Query
-const { data: user } = useQuery({
-  queryKey: ['user'],
-  queryFn: () => fetch('/api/user').then(r => r.json()),
-});
-```
-
-### Form Handling with Actions
-
-Use React 19's form primitives instead of manual state:
-
-```tsx
-"use client";
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
-
-// Submit button in separate component (required for useFormStatus)
-function SubmitButton() {
-  const { pending } = useFormStatus();
-  return <button disabled={pending}>{pending ? "Saving..." : "Save"}</button>;
-}
-
-function ProfileForm() {
-  const [state, formAction, isPending] = useActionState(updateProfile, null);
-
-  return (
-    <form action={formAction}>
-      <input name="name" />
-      {state?.error && <p className="text-red-500">{state.error}</p>}
-      <SubmitButton />
-    </form>
-  );
-}
-
-// Server Action
-async function updateProfile(prevState: any, formData: FormData) {
-  "use server";
-  const name = formData.get("name");
-  // validate, save to db, return result
-  return { success: true };
-}
-```
-
-### Optimistic Updates
-
-Use `useOptimistic` for instant UI feedback:
-
-```tsx
-"use client";
-function TodoList({ todos }: { todos: Todo[] }) {
-  const [optimisticTodos, addOptimistic] = useOptimistic(
-    todos,
-    (state, newTodo: Todo) => [...state, newTodo]
-  );
-
-  async function addTodo(formData: FormData) {
-    const newTodo = { id: crypto.randomUUID(), text: formData.get("text") };
-    addOptimistic(newTodo);           // Instant UI update
-    await createTodoOnServer(newTodo); // Server catches up
-  }
-
-  return (
-    <form action={addTodo}>
-      <input name="text" />
-      <button>Add</button>
-      <ul>
-        {optimisticTodos.map(todo => <li key={todo.id}>{todo.text}</li>)}
-      </ul>
-    </form>
-  );
-}
-```
-
-### State Management
-
-| Need | Tool |
-|------|------|
-| Server state (fetched data) | TanStack Query |
-| URL state (filters, pagination) | `useSearchParams`, `nuqs` |
-| Form state | `useActionState` |
-| Local UI state | `useState` |
-| Shared client state | Zustand (simple) or Jotai (atomic) |
-
-**Avoid:** Redux for new projects, `useContext` for frequently-updating values, prop drilling more than 2 levels.
-
-### Performance Patterns
-
-```tsx
-// ✅ Fetch in parallel, not waterfall
-const [user, posts] = await Promise.all([
-  getUser(id),
-  getPosts(id),
-]);
-
-// ✅ Pass only needed props to client components
-<ClientComponent name={user.name} />  // Not the whole user object
-
-// ✅ Use Suspense boundaries strategically
-<Suspense fallback={<Skeleton />}>
-  <SlowComponent />
-</Suspense>
-```
+For TypeScript + React, key highlights:
+- Server Components by default (only `"use client"` when needed)
+- Avoid useEffect for derived state, data fetching, event responses
+- Const objects over enums
+- No `any`, `!`, or `as` for external data
+- Union types for state machines (not multiple booleans)
 
 ## Workflow
 

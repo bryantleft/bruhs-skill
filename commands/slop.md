@@ -24,6 +24,15 @@ This command embodies the mindset of a senior engineer who:
 - Treats technical debt as a personal insult
 - Knows that the best code is no code
 
+## Best Practices Reference
+
+Slop detects violations of the patterns defined in:
+
+- **`practices/_common.md`** - Universal patterns (naming, git, errors, testing)
+- **`practices/typescript-react.md`** - TypeScript + React specific patterns
+
+**Read these files for the full pattern catalog.** The sections below summarize what slop detects.
+
 ## The Eight Pillars
 
 Slop analyzes code through eight critical lenses:
@@ -40,6 +49,8 @@ Slop analyzes code through eight critical lenses:
 | **Architecture** | Does it fit the system, or fight it? |
 
 ## AI Slop Patterns
+
+> Full patterns with examples in `practices/typescript-react.md`
 
 ### Category 1: Over-Engineering (YAGNI Violations)
 
@@ -484,10 +495,29 @@ grep -rn "eval(" src/ --include="*.ts" --include="*.tsx"
 
 ### Step 4: Deep Code Analysis
 
+**Load practices for the stack:**
+
+```javascript
+// Determine stack from bruhs.json
+const stack = config.stack?.framework || 'typescript';
+
+// Load relevant practices file
+if (['nextjs', 'react-native', 'tauri', 'electron'].includes(stack)) {
+  practices = Read('practices/typescript-react.md');
+} else if (stack === 'fastapi') {
+  practices = Read('practices/python-fastapi.md');
+} else if (stack === 'hono') {
+  practices = Read('practices/typescript-hono.md');
+}
+
+// Always load common practices
+commonPractices = Read('practices/_common.md');
+```
+
 For each file, analyze using the Task tool with code-explorer agent:
 
 ```
-Analyze this file for AI slop patterns:
+Analyze this file for AI slop patterns.
 - Over-engineering (unnecessary abstractions, premature generalization)
 - TypeScript anti-patterns (any, !, as, redundant types)
 - React anti-patterns (derived state, multiple booleans, unnecessary effects)

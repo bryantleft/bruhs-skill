@@ -149,6 +149,27 @@ Deep codebase analysis and AI slop cleanup. Acts as a nitpicky senior engineer.
 - `nitpicky` - Critical + high + medium (default)
 - `brutal` - Everything, no mercy
 
+## Best Practices
+
+Shared practices used by both `cook` (building) and `slop` (cleanup):
+
+```
+practices/
+  _common.md           # Universal: naming, git, errors, testing
+  typescript-react.md  # TypeScript + React patterns
+  python-fastapi.md    # (planned) Python + FastAPI patterns
+  typescript-hono.md   # (planned) TypeScript + Hono patterns
+  rust.md              # (planned) Rust patterns
+  luau-roblox.md       # (planned) Luau/Roblox patterns
+```
+
+The practices define:
+- **DO** patterns to follow
+- **DON'T** anti-patterns to avoid
+- Quick reference checklists
+
+Currently implemented: TypeScript + React (covers Next.js, React Native, Tauri, Electron).
+
 ## Configuration
 
 Create `.claude/bruhs.json` in your project:
