@@ -18,6 +18,7 @@ npx skills add bryantleft/bruhs-skills
 /bruhs yeet         # Ship: Linear ticket → Branch → Commit → PR
 /bruhs peep         # Address PR review comments and merge
 /bruhs dip          # Clean up after merge and switch to base branch
+/bruhs slop         # Clean up AI slop (senior engineer review)
 ```
 
 ## Commands
@@ -113,6 +114,40 @@ Clean up after merging and switch to base branch.
 4. Restore stashed changes from cook (if any)
 
 Use this after your PR is merged to start fresh for the next feature.
+
+### `/bruhs slop`
+
+Deep codebase analysis and AI slop cleanup. Acts as a nitpicky senior engineer.
+
+**What it detects:**
+- **Over-engineering**: Unnecessary abstractions, premature generalization, factory abuse
+- **TypeScript anti-patterns**: `any` types, non-null assertions, type assertion abuse
+- **React anti-patterns**: Derived state bugs, multiple boolean state, unnecessary effects
+- **Code noise**: Over-commenting, verbose names, dead code, TODO graveyards
+- **Duplication**: Copy-paste code, inconsistent patterns
+- **Security smells**: Hardcoded secrets, injection vulnerabilities
+- **Performance issues**: N+1 queries, unnecessary re-renders
+- **Architecture violations**: Circular deps, mixed abstraction levels
+
+**Workflow:**
+1. Load stack context from bruhs.json
+2. Run static analysis (TypeScript, security, dead code)
+3. Deep analysis of each file for slop patterns
+4. Generate severity-ranked report
+5. Interactive fixing (or auto-fix safe issues)
+6. Verify with tsc, lint, tests
+
+**Invocation:**
+- `/bruhs slop` - Full codebase scan
+- `/bruhs slop src/components` - Target specific directory
+- `/bruhs slop --fix` - Auto-fix safe issues, prompt for others
+- `/bruhs slop --report` - Report only, no fixes
+
+**Severity levels** (configurable in bruhs.json):
+- `relaxed` - Critical only
+- `balanced` - Critical + high
+- `nitpicky` - Critical + high + medium (default)
+- `brutal` - Everything, no mercy
 
 ## Configuration
 

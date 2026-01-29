@@ -15,6 +15,7 @@ What do you want to do?
 ○ yeet - Ship: Linear ticket → Branch → Commit → PR
 ○ peep - Address PR review comments and merge
 ○ dip - Clean up after merge and switch to base branch
+○ slop - Clean up AI slop (senior engineer code review)
 ```
 
 Present these options interactively, then follow the corresponding command file:
@@ -24,6 +25,7 @@ Present these options interactively, then follow the corresponding command file:
 - **yeet** → Read and follow `commands/yeet.md`
 - **peep** → Read and follow `commands/peep.md`
 - **dip** → Read and follow `commands/dip.md`
+- **slop** → Read and follow `commands/slop.md`
 
 ## Quick Access
 
@@ -34,5 +36,6 @@ Users can also specify directly:
 - `/bruhs yeet`
 - `/bruhs peep` or `/bruhs peep <PR#>` or `/bruhs peep <TICKET-ID>`
 - `/bruhs dip`
+- `/bruhs slop` or `/bruhs slop <path>` or `/bruhs slop --fix`
 
 If an argument is provided, skip the selection and go directly to that command.
