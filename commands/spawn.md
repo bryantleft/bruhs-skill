@@ -370,11 +370,71 @@ try {
 }
 ```
 
-### Step 4: Create Linear Project (if new repo and Linear available)
+### Step 4: Select Linear Team and Create Project (if new repo and Linear available)
+
+**Always ask the user which team to use - never assume from previous config:**
+
+```javascript
+ToolSearch("select:mcp__linear__list_teams")
+ToolSearch("select:mcp__linear__list_projects")
+ToolSearch("select:mcp__linear__create_project")
+
+// Fetch available teams
+teams = mcp__linear__list_teams()
+
+// Build team options dynamically
+const teamOptions = teams.slice(0, 4).map(t => ({
+  label: t.name,
+  description: t.key || "Linear team"
+}));
+
+// ALWAYS ask user to select team - don't default to previous
+AskUserQuestion({
+  questions: [{
+    question: "Which Linear team for this project?",
+    header: "Team",
+    multiSelect: false,
+    options: teamOptions
+  }]
+})
+
+// After team selected, ask if they want to create a new project or use existing
+existingProjects = mcp__linear__list_projects({ teamId: selectedTeam.id })
+
+if (existingProjects.length > 0) {
+  const projectOptions = [
+    { label: "Create new project", description: `Create "${projectName}" project` },
+    ...existingProjects.slice(0, 3).map(p => ({
+      label: p.name,
+      description: "Use existing project"
+    }))
+  ];
+
+  AskUserQuestion({
+    questions: [{
+      question: "Which Linear project?",
+      header: "Project",
+      multiSelect: false,
+      options: projectOptions
+    }]
+  })
+} else {
+  // No existing projects, create new one automatically
+  console.log(`Creating new Linear project: ${projectName}`)
+}
+
+// Create project if "Create new project" selected
+if (createNewProject) {
+  mcp__linear__create_project({
+    name: projectName,
+    teamIds: [selectedTeam.id]
+  })
+}
+```
 
 Use Linear MCP to create project:
 - Project name: `<project-name>`
-- Team: From user selection or config
+- Team: **From user selection (always ask)**
 
 ### Step 5: Create Initial Linear Tickets
 
@@ -415,8 +475,10 @@ Create `.claude/bruhs.json` with selected configuration:
 {
   "integrations": {
     "linear": {
-      "team": "<linear-team>",
-      "project": "<linear-project>",
+      "team": "<selected-team-id>",      // From Step 4 user selection
+      "teamName": "<selected-team-name>", // For display
+      "project": "<selected-project-id>", // From Step 4 user selection
+      "projectName": "<selected-project-name>", // For display
       "labels": {
         "feat": "Feature",
         "fix": "Bug",
