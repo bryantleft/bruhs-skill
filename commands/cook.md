@@ -57,12 +57,20 @@ For TypeScript + React, key highlights:
 ls .claude/bruhs.json 2>/dev/null
 ```
 
-If config doesn't exist:
-```
-No bruhs.json found. Would you like to:
-○ Run /bruhs claim (recommended) - Full setup with stack detection
-○ Continue without config - Will skip Linear integration
-```
+If config doesn't exist, use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "No bruhs.json found. Would you like to:",
+    header: "Config",
+    multiSelect: false,
+    options: [
+      { label: "Run /bruhs claim (Recommended)", description: "Full setup with stack detection" },
+      { label: "Continue without config", description: "Will skip Linear integration" },
+    ]
+  }]
+})
 
 If user chooses to continue without config:
 - Skip Linear-related features
@@ -186,7 +194,7 @@ Use the Task tool with `subagent_type: "feature-dev:code-explorer"` to:
 
 ### Step 3: Plan
 
-Design 2-3 approaches based on exploration:
+Design 2-3 approaches based on exploration. First, output the approach details:
 
 ```
 Planning...
@@ -202,9 +210,23 @@ Planning...
 - Files to modify: <list>
 - Pros: <benefits>
 - Cons: <tradeoffs>
-
-Which approach? [1/2]
 ```
+
+Then use `AskUserQuestion` for selection:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Which approach do you want to use?",
+    header: "Approach",
+    multiSelect: false,
+    options: [
+      { label: "Approach 1: <name>", description: "<key benefit>" },
+      { label: "Approach 2: <name>", description: "<key benefit>" },
+      // Add Approach 3 if applicable
+    ]
+  }]
+})
 
 Use brainstorming patterns:
 - Consider multiple solutions
@@ -297,10 +319,20 @@ First, check if dev server is running (for UI changes):
 lsof -i :<detected-port> | grep LISTEN
 ```
 
-If not running:
-```
-Dev server not running. Start it? [Y/n]
-```
+If not running, use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Dev server not running. Would you like to start it?",
+    header: "Dev server",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Start dev server in background" },
+      { label: "No", description: "Continue without dev server" },
+    ]
+  }]
+})
 
 If yes, start in background using the project's dev command:
 ```bash

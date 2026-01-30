@@ -23,11 +23,20 @@ Set up `.claude/bruhs.json` for an existing project. Use this when you have a pr
 ls .claude/bruhs.json 2>/dev/null
 ```
 
-If config exists:
-```
-Config already exists at .claude/bruhs.json
-Would you like to reconfigure? [y/N]
-```
+If config exists, use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Config already exists at .claude/bruhs.json. Would you like to reconfigure?",
+    header: "Reconfigure",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Overwrite existing configuration" },
+      { label: "No", description: "Keep existing configuration and exit" },
+    ]
+  }]
+})
 
 ### Step 2: Detect Project Structure
 
@@ -66,25 +75,48 @@ try {
 
 ### Step 4: Gather Linear Config (if available)
 
-If Linear is available:
+If Linear is available, use `AskUserQuestion` for team and project selection:
 
 ```javascript
 ToolSearch("select:mcp__linear__list_projects")
 
-// Ask user to select team
-"Which Linear team?"
-teams.map(t => `○ ${t.name}`)
+// Build team options dynamically
+const teamOptions = teams.slice(0, 4).map(t => ({
+  label: t.name,
+  description: t.key || "Linear team"
+}));
 
-// Ask user to select project
+AskUserQuestion({
+  questions: [{
+    question: "Which Linear team?",
+    header: "Team",
+    multiSelect: false,
+    options: teamOptions
+  }]
+})
+
+// After team selected, get projects and ask
 projects = mcp__linear__list_projects({ teamId: selectedTeam.id })
-"Which Linear project?"
-projects.map(p => `○ ${p.name}`)
-```
+
+const projectOptions = projects.slice(0, 4).map(p => ({
+  label: p.name,
+  description: p.description || "Linear project"
+}));
+
+AskUserQuestion({
+  questions: [{
+    question: "Which Linear project?",
+    header: "Project",
+    multiSelect: false,
+    options: projectOptions
+  }]
+})
 
 ### Step 5: Confirm Stack Detection
 
-Present detected stack and ask for confirmation/corrections:
+Present detected stack and use `AskUserQuestion` for confirmation:
 
+First, output the detected stack:
 ```
 Detected stack:
   ✓ Framework: Next.js
@@ -92,14 +124,23 @@ Detected stack:
   ✓ Database: Drizzle + Postgres
   ✓ Testing: Vitest
   ✓ Tooling: Biome
-
-Anything to add or change? [Enter to confirm]
 ```
 
-Allow user to:
-- Confirm detection
-- Add missing items
-- Correct wrong detections
+Then ask for confirmation:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Is the detected stack correct?",
+    header: "Confirm",
+    multiSelect: false,
+    options: [
+      { label: "Yes, looks good", description: "Confirm and continue" },
+      { label: "Add missing items", description: "I need to add something not detected" },
+      { label: "Correct detection", description: "Something was detected incorrectly" },
+    ]
+  }]
+})
 
 ### Step 6: Detect Installed Tooling
 

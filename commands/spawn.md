@@ -22,10 +22,21 @@ Check if we're in a monorepo:
 ls turbo.json pnpm-workspace.yaml 2>/dev/null
 ```
 
-If monorepo detected, ask:
-- Add new app to this monorepo?
-- Add new package to this monorepo?
-- Create entirely new project (outside)?
+If monorepo detected, use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "What would you like to add to this monorepo?",
+    header: "Add to repo",
+    multiSelect: false,
+    options: [
+      { label: "New app", description: "Add a new application to apps/" },
+      { label: "New package", description: "Add a shared package to packages/" },
+      { label: "New project (outside)", description: "Create entirely new project outside this monorepo" },
+    ]
+  }]
+})
 
 ### Step 2: Selection Flow
 
@@ -37,27 +48,56 @@ Structure → Project Type → Language → Framework → Stack Additions
 
 #### 2a: Structure (if new project)
 
-Ask user:
-```
-Project structure:
-○ Monorepo (Turborepo) - Multiple apps/packages
-○ Single package - Standalone project
-```
+Use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "What project structure do you want?",
+    header: "Structure",
+    multiSelect: false,
+    options: [
+      { label: "Monorepo (Turborepo)", description: "Multiple apps/packages in one repository" },
+      { label: "Single package", description: "Standalone project with one package" },
+    ]
+  }]
+})
 
 #### 2b: Project Type
 
-Ask user:
-```
-What are you building?
-○ Web - Website or web application
-○ Desktop - Desktop application
-○ Mobile - Mobile application
-○ Extension - Browser or VS Code extension
-○ Roblox - Roblox game
-○ CLI - Command-line tool
-○ Library - Reusable package
-○ API - Backend service
-```
+Use `AskUserQuestion` (split into two questions due to 4-option limit):
+
+```javascript
+AskUserQuestion({
+  questions: [
+    {
+      question: "What are you building?",
+      header: "Type",
+      multiSelect: false,
+      options: [
+        { label: "Web", description: "Website or web application" },
+        { label: "API", description: "Backend service" },
+        { label: "Mobile", description: "Mobile application" },
+        { label: "Desktop", description: "Desktop application" },
+      ]
+    }
+  ]
+})
+
+// If user selects "Other", show secondary options:
+AskUserQuestion({
+  questions: [{
+    question: "What type of project?",
+    header: "Type",
+    multiSelect: false,
+    options: [
+      { label: "Extension", description: "Browser or VS Code extension" },
+      { label: "CLI", description: "Command-line tool" },
+      { label: "Library", description: "Reusable package" },
+      { label: "Roblox", description: "Roblox game" },
+    ]
+  }]
+})
 
 #### 2c: Language (filtered by project type)
 
@@ -93,47 +133,230 @@ What are you building?
 
 #### 2e: Stack Additions (filtered by project type)
 
-Present relevant options based on project type:
+Use `AskUserQuestion` with `multiSelect: true` for each category. Present only relevant categories based on project type.
 
-**For Web/Desktop/Mobile:**
-- Styling: Tailwind CSS, shadcn/ui
-- State: Zustand, Jotai
-- Animation: Framer Motion, GSAP
+**For Web/Desktop/Mobile - Styling & State:**
 
-**For Web/API/Desktop:**
-- Database: Drizzle + Postgres, Convex, ClickHouse, Upstash Redis, SQLite
-- Auth: Better Auth, WorkOS
+```javascript
+AskUserQuestion({
+  questions: [
+    {
+      question: "Which styling options do you want?",
+      header: "Styling",
+      multiSelect: true,
+      options: [
+        { label: "Tailwind CSS", description: "Utility-first CSS framework" },
+        { label: "shadcn/ui", description: "Re-usable components built with Radix + Tailwind" },
+      ]
+    },
+    {
+      question: "Which state management do you want?",
+      header: "State",
+      multiSelect: false,
+      options: [
+        { label: "Zustand", description: "Simple, fast state management" },
+        { label: "Jotai", description: "Primitive and flexible atomic state" },
+      ]
+    }
+  ]
+})
+```
 
-**For TypeScript projects:**
-- Libraries: Effect, Zod, TanStack Query
-- Testing: Vitest, Playwright
-- Tooling: Biome, Husky
+**For Web/API/Desktop - Database & Auth:**
+
+```javascript
+AskUserQuestion({
+  questions: [
+    {
+      question: "Which database do you want?",
+      header: "Database",
+      multiSelect: false,
+      options: [
+        { label: "Drizzle + Postgres", description: "TypeScript ORM with PostgreSQL" },
+        { label: "Convex", description: "Real-time backend with built-in DB" },
+        { label: "Upstash Redis", description: "Serverless Redis for caching/queues" },
+        { label: "SQLite", description: "Embedded file-based database" },
+      ]
+    },
+    {
+      question: "Which auth provider do you want?",
+      header: "Auth",
+      multiSelect: false,
+      options: [
+        { label: "Better Auth", description: "TypeScript-first auth framework" },
+        { label: "WorkOS", description: "Enterprise SSO and directory sync" },
+      ]
+    }
+  ]
+})
+```
+
+**For TypeScript projects - Libraries & Testing:**
+
+```javascript
+AskUserQuestion({
+  questions: [
+    {
+      question: "Which libraries do you want?",
+      header: "Libraries",
+      multiSelect: true,
+      options: [
+        { label: "Zod", description: "TypeScript-first schema validation" },
+        { label: "TanStack Query", description: "Async state management" },
+        { label: "Effect", description: "Structured concurrency and typed errors" },
+      ]
+    },
+    {
+      question: "Which testing tools do you want?",
+      header: "Testing",
+      multiSelect: true,
+      options: [
+        { label: "Vitest", description: "Fast unit testing" },
+        { label: "Playwright", description: "End-to-end browser testing" },
+      ]
+    }
+  ]
+})
+```
+
+**For TypeScript projects - Tooling:**
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Which tooling do you want?",
+    header: "Tooling",
+    multiSelect: true,
+    options: [
+      { label: "Biome", description: "Fast linter and formatter" },
+      { label: "Husky", description: "Git hooks for pre-commit checks" },
+    ]
+  }]
+})
+```
 
 **For Python projects:**
-- Testing: pytest
-- Tooling: Ruff, uv, ty, pre-commit
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Which Python tooling do you want?",
+    header: "Tooling",
+    multiSelect: true,
+    options: [
+      { label: "pytest", description: "Python testing framework" },
+      { label: "Ruff", description: "Fast Python linter" },
+      { label: "uv", description: "Fast Python package manager" },
+      { label: "pre-commit", description: "Git hooks for Python" },
+    ]
+  }]
+})
+```
 
 **For Rust projects:**
-- Testing: cargo test
-- Tooling: Clippy, rustfmt, cargo-watch
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Which Rust tooling do you want?",
+    header: "Tooling",
+    multiSelect: true,
+    options: [
+      { label: "Clippy", description: "Rust linter" },
+      { label: "rustfmt", description: "Rust formatter" },
+      { label: "cargo-watch", description: "Auto-rebuild on changes" },
+    ]
+  }]
+})
+```
 
 **For Luau (Roblox):**
-- Tooling: Selene, StyLua, Rojo
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Which Roblox tooling do you want?",
+    header: "Tooling",
+    multiSelect: true,
+    options: [
+      { label: "Selene", description: "Luau linter" },
+      { label: "StyLua", description: "Luau formatter" },
+      { label: "Rojo", description: "Sync to Roblox Studio" },
+    ]
+  }]
+})
+```
 
 **For AI/ML projects:**
-- AI: Vercel AI SDK (TS), LangChain (TS/Python)
-- LLM Observability: Langfuse, Braintrust
-- GPU: Modal (Python)
 
-**For Web/API:**
-- Workers: Inngest
-- Payments: Stripe, Polar
-- Email: Resend
-- Infra: Vercel, Railway, Docker
+```javascript
+AskUserQuestion({
+  questions: [
+    {
+      question: "Which AI framework do you want?",
+      header: "AI",
+      multiSelect: false,
+      options: [
+        { label: "Vercel AI SDK", description: "Streaming AI responses (TypeScript)" },
+        { label: "LangChain", description: "LLM application framework" },
+      ]
+    },
+    {
+      question: "Which LLM observability do you want?",
+      header: "Observability",
+      multiSelect: false,
+      options: [
+        { label: "Langfuse", description: "Open-source LLM tracing" },
+        { label: "Braintrust", description: "LLM evaluation platform" },
+      ]
+    }
+  ]
+})
+```
 
-**For All:**
-- Observability: Axiom, Vanta
-- CI/CD: GitHub Actions + Blacksmith
+**For Web/API - Infrastructure:**
+
+```javascript
+AskUserQuestion({
+  questions: [
+    {
+      question: "Which infrastructure do you want?",
+      header: "Infra",
+      multiSelect: true,
+      options: [
+        { label: "Vercel", description: "Frontend and serverless hosting" },
+        { label: "Railway", description: "Full-stack app platform" },
+        { label: "Docker", description: "Container-based deployment" },
+      ]
+    },
+    {
+      question: "Which additional services do you want?",
+      header: "Services",
+      multiSelect: true,
+      options: [
+        { label: "Inngest", description: "Background jobs and workflows" },
+        { label: "Stripe", description: "Payment processing" },
+        { label: "Resend", description: "Transactional email" },
+      ]
+    }
+  ]
+})
+```
+
+**For All projects - Observability & CI:**
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Which observability/CI do you want?",
+    header: "DevOps",
+    multiSelect: true,
+    options: [
+      { label: "Axiom", description: "Log aggregation and monitoring" },
+      { label: "GitHub Actions + Blacksmith", description: "CI/CD with fast runners" },
+    ]
+  }]
+})
 
 ### Step 3: Check Linear MCP
 
@@ -245,21 +468,36 @@ for (item of selectedStack) {
 }
 ```
 
-Present recommendations:
-```
-Found relevant skills for your stack:
+Present skill recommendations using `AskUserQuestion` with `multiSelect: true`:
 
-Framework:
-  ☐ vercel-react-best-practices (58K installs)
-  ☐ vercel-composition-patterns (3K installs)
+```javascript
+// Build options dynamically from find-skills results
+const skillOptions = foundSkills.map(skill => ({
+  label: skill.name,
+  description: `${skill.description} (${skill.installs} installs)`
+}));
 
-Styling:
-  ☐ web-design-guidelines (45K installs)
+// Present in batches of 4 (AskUserQuestion limit)
+AskUserQuestion({
+  questions: [{
+    question: "Which skills do you want to install?",
+    header: "Skills",
+    multiSelect: true,
+    options: skillOptions.slice(0, 4)  // First 4 skills
+  }]
+})
 
-Database:
-  ☐ supabase-postgres-best-practices (6K installs)
-
-Install selected? [Y/n]
+// If more than 4 skills, ask again for the rest
+if (skillOptions.length > 4) {
+  AskUserQuestion({
+    questions: [{
+      question: "Any additional skills?",
+      header: "More skills",
+      multiSelect: true,
+      options: skillOptions.slice(4, 8)
+    }]
+  })
+}
 ```
 
 Install selected skills:

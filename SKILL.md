@@ -5,20 +5,29 @@ description: Opinionated development lifecycle - spawn projects, cook features, 
 
 # bruhs - Complete Development Lifecycle
 
-When invoked, ask the user which command to run:
+When invoked, use the `AskUserQuestion` tool to present the command options interactively:
 
-```
-What do you want to do?
-○ spawn - Create new project or add to monorepo
-○ claim - Claim existing project for bruhs
-○ cook - Plan + Build a feature end-to-end
-○ yeet - Ship: Linear ticket → Branch → Commit → PR
-○ peep - Address PR review comments and merge
-○ dip - Clean up after merge and switch to base branch
-○ slop - Clean up AI slop (type signatures first, senior engineer review)
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "What do you want to do?",
+    header: "Command",
+    multiSelect: false,
+    options: [
+      { label: "spawn", description: "Create new project or add to monorepo" },
+      { label: "claim", description: "Claim existing project for bruhs" },
+      { label: "cook", description: "Plan + Build a feature end-to-end" },
+      { label: "yeet", description: "Ship: Linear ticket → Branch → Commit → PR" },
+      { label: "peep", description: "Address PR review comments and merge" },
+      { label: "dip", description: "Clean up after merge and switch to base branch" },
+    ]
+  }]
+})
 ```
 
-Present these options interactively, then follow the corresponding command file:
+**Note:** The `slop` command is intentionally excluded from the main menu as it's a specialized cleanup tool. Users can invoke it directly with `/bruhs slop`.
+
+After user selects, follow the corresponding command file:
 - **spawn** → Read and follow `commands/spawn.md`
 - **claim** → Read and follow `commands/claim.md`
 - **cook** → Read and follow `commands/cook.md`

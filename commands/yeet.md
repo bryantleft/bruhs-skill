@@ -25,12 +25,20 @@ Ship code that's ready to go. Creates Linear ticket, commits, pushes, and opens 
 ls .claude/bruhs.json 2>/dev/null
 ```
 
-If config doesn't exist:
-```
-No bruhs.json found. Would you like to:
-○ Run /bruhs claim (recommended) - Full setup with Linear integration
-○ Continue in git-only mode - Commit and PR without Linear tickets
-```
+If config doesn't exist, use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "No bruhs.json found. Would you like to:",
+    header: "Config",
+    multiSelect: false,
+    options: [
+      { label: "Run /bruhs claim (Recommended)", description: "Full setup with Linear integration" },
+      { label: "Continue in git-only mode", description: "Commit and PR without Linear tickets" },
+    ]
+  }]
+})
 
 If user chooses git-only mode:
 - Skip all Linear steps (ticket creation, status updates)
@@ -81,8 +89,19 @@ try {
   linearAvailable = true
 } catch {
   console.log("Linear MCP not configured.")
-  // Ask user
-  "Continue without Linear (git-only mode)? [Y/n]"
+
+  // Ask user with AskUserQuestion
+  AskUserQuestion({
+    questions: [{
+      question: "Linear MCP not configured. Continue without Linear?",
+      header: "Linear",
+      multiSelect: false,
+      options: [
+        { label: "Yes, git-only mode", description: "Commit and PR without Linear tickets" },
+        { label: "No, abort", description: "Stop and configure Linear first" },
+      ]
+    }]
+  })
 }
 ```
 
@@ -448,7 +467,7 @@ When you get review feedback, run /bruhs peep to address comments.
 
 ### Multiple Changes (Interactive)
 
-If changes span multiple logical units:
+If changes span multiple logical units, use `AskUserQuestion`:
 
 ```
 > /bruhs:yeet
@@ -456,28 +475,52 @@ If changes span multiple logical units:
 Analyzing changes...
 - 5 files modified
 - Changes appear to span multiple features
+```
 
-How would you like to ship?
-○ Single commit (all changes together)
-○ Interactive (choose files per commit)
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to ship these changes?",
+    header: "Ship mode",
+    multiSelect: false,
+    options: [
+      { label: "Single commit", description: "All changes together in one commit" },
+      { label: "Interactive", description: "Choose files per commit" },
+    ]
+  }]
+})
+```
 
-> Interactive
+If interactive mode selected, use `AskUserQuestion` with `multiSelect: true` for file selection:
 
-Select files for first commit:
-☑ components/game/leaderboard-card.tsx
-☑ lib/db/queries.ts
-☐ components/ui/button.tsx
-☐ lib/utils.ts
+```javascript
+// Build file options from changed files
+const fileOptions = changedFiles.slice(0, 4).map(f => ({
+  label: f.name,
+  description: f.status // "modified", "created", etc.
+}));
 
-Description: Add leaderboard component
+AskUserQuestion({
+  questions: [{
+    question: "Select files for first commit:",
+    header: "Files",
+    multiSelect: true,
+    options: fileOptions
+  }]
+})
 
-[Creates ticket, branch, commit, PR for selection]
-
-Remaining changes:
-☑ components/ui/button.tsx
-☑ lib/utils.ts
-
-Ship these too? [Y/n]
+// After first commit, if remaining files exist:
+AskUserQuestion({
+  questions: [{
+    question: "Ship remaining changes too?",
+    header: "More files",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Create another commit for remaining files" },
+      { label: "No", description: "Leave remaining files uncommitted" },
+    ]
+  }]
+})
 ```
 
 ## Git Best Practices

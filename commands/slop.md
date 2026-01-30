@@ -733,13 +733,24 @@ async function fetchUser(id: string): Promise<User> {
   return userSchema.parse(await res.json());
 }
 ```
-
-Action:
-○ Apply fix
-○ Skip
-○ Mark as intentional (add comment)
-○ Show more context
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to handle this issue?",
+    header: "Action",
+    multiSelect: false,
+    options: [
+      { label: "Apply fix", description: "Apply the suggested fix" },
+      { label: "Skip", description: "Address later" },
+      { label: "Mark intentional", description: "Add comment explaining why" },
+      { label: "Show context", description: "See more surrounding code" },
+    ]
+  }]
+})
 
 **Auto-fixable issues (applied without prompt):**
 - Unused imports
@@ -863,9 +874,22 @@ Deep analysis in progress...
 
 ## High (15)
 ...
-
-View full report? [Y/n]
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Would you like to view the full report?",
+    header: "Report",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Show all issues by category" },
+      { label: "No", description: "Continue to fixing" },
+    ]
+  }]
+})
 
 ### Targeted Directory
 
@@ -881,9 +905,22 @@ Scanning src/components/ (45 files)...
 
 ## Medium (12)
 ...
-
-Fix issues interactively? [Y/n]
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Fix issues interactively?",
+    header: "Fix",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Go through each issue" },
+      { label: "No", description: "Generate report only" },
+    ]
+  }]
+})
 
 ### Auto-Fix Mode
 
@@ -896,9 +933,22 @@ Auto-fixing safe issues...
 ✓ Removed 15 redundant type annotations
 
 Interactive fixes remaining: 28
-
-[Continue with interactive fixes? Y/n]
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Continue with interactive fixes?",
+    header: "Continue",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Address remaining issues one by one" },
+      { label: "No", description: "Stop here" },
+    ]
+  }]
+})
 
 ## Tips
 

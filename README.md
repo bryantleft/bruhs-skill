@@ -225,6 +225,27 @@ Create `.claude/bruhs.json` in your project:
 - **tooling** - MCPs and skills (auto-detected at setup, grows as you build)
 - **stack** - Tech stack choices
 
+## Interactive Selection
+
+All commands use Claude Code's `AskUserQuestion` tool for interactive selection prompts. This provides a proper UI with clickable options instead of text-based checkboxes that require typing.
+
+Example:
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Which approach do you want?",
+    header: "Approach",
+    multiSelect: false,
+    options: [
+      { label: "Option A", description: "Description of option A" },
+      { label: "Option B", description: "Description of option B" },
+    ]
+  }]
+})
+```
+
+For multi-select prompts (like stack additions), `multiSelect: true` allows selecting multiple options.
+
 ## Dependencies
 
 - **Linear MCP** (optional) - For ticket management. Run `claude mcp add linear` to enable.

@@ -30,15 +30,27 @@ Already on main. Nothing to clean up!
 ```
 
 If uncommitted changes exist:
+
 ```
 ⚠ You have uncommitted changes:
   - components/foo.tsx (modified)
-
-How would you like to proceed?
-○ Stash changes - Save for later
-○ Discard changes - Lose all changes
-○ Abort - Stay on current branch
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to proceed?",
+    header: "Changes",
+    multiSelect: false,
+    options: [
+      { label: "Stash changes", description: "Save for later with git stash" },
+      { label: "Discard changes", description: "Lose all uncommitted changes" },
+      { label: "Abort", description: "Stay on current branch" },
+    ]
+  }]
+})
 
 ### Step 2: Detect Base Branch
 
@@ -85,14 +97,20 @@ git branch -d <featureBranch>
 git push origin --delete <featureBranch>
 ```
 
-If branch wasn't merged:
-```
-⚠ Branch 'feat/unmerged-feature' is not fully merged.
+If branch wasn't merged, use `AskUserQuestion`:
 
-Delete anyway?
-○ Yes - Force delete (git branch -D)
-○ No - Keep branch
-```
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Branch 'feat/unmerged-feature' is not fully merged. Delete anyway?",
+    header: "Unmerged",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Force delete with git branch -D" },
+      { label: "No", description: "Keep the branch" },
+    ]
+  }]
+})
 
 ### Step 6: Check for Stashed Changes
 
@@ -101,15 +119,27 @@ git stash list | grep "bruhs:"
 ```
 
 If stash exists from cook:
+
 ```
 💡 You have stashed changes from before your last feature:
    stash@{0}: On main: bruhs: stashed before add-leaderboard
-
-Would you like to restore them?
-○ Yes - Run git stash pop
-○ No - Keep stashed for later
-○ Drop - Delete the stash
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Would you like to restore the stashed changes?",
+    header: "Stash",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Run git stash pop to restore" },
+      { label: "No", description: "Keep stashed for later" },
+      { label: "Drop", description: "Delete the stash permanently" },
+    ]
+  }]
+})
 
 ### Step 7: Output Summary
 

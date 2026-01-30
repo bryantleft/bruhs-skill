@@ -29,14 +29,20 @@ Review and address PR feedback, push fixes, and optionally merge when ready.
 pr=$(gh pr view --json number,headRefName,url,state,reviewDecision,title 2>/dev/null)
 ```
 
-If no PR found:
-```
-No PR found for current branch.
+If no PR found, use `AskUserQuestion`:
 
-Would you like to:
-○ Specify a PR number
-○ Abort
-```
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "No PR found for current branch. What would you like to do?",
+    header: "No PR",
+    multiSelect: false,
+    options: [
+      { label: "Specify a PR number", description: "Enter a specific PR to review" },
+      { label: "Abort", description: "Exit without reviewing" },
+    ]
+  }]
+})
 
 **If PR number provided:**
 
@@ -136,12 +142,23 @@ Comments (4 unresolved):
 │ suggestion  │ 2    │ components/game/leaderboard-card.tsx│
 │ question    │ 1    │ lib/hooks/use-leaderboard.ts        │
 └─────────────┴──────┴─────────────────────────────────────┘
-
-Ready to address comments?
-○ Yes - Go through each comment
-○ View all comments first
-○ Abort
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Ready to address comments?",
+    header: "Review",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Go through each comment" },
+      { label: "View all first", description: "See all comments before addressing" },
+      { label: "Abort", description: "Exit without addressing" },
+    ]
+  }]
+})
 
 ### Step 4: Address Each Comment
 
@@ -162,12 +179,23 @@ export async function getTopAgents(limit = 10) {
   return db.select().from(agentStats).limit(limit);
 }
 ```
-
-How would you like to proceed?
-○ Apply fix - Add orderBy clause
-○ Skip - Address later
-○ Discuss - Need clarification
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to proceed?",
+    header: "Action",
+    multiSelect: false,
+    options: [
+      { label: "Apply fix", description: "Add orderBy clause" },
+      { label: "Skip", description: "Address later" },
+      { label: "Discuss", description: "Need clarification from reviewer" },
+    ]
+  }]
+})
 
 **If "Apply fix":**
 
@@ -184,11 +212,22 @@ Applying fix...
 Diff:
 - return db.select().from(agentStats).limit(limit);
 + return db.select().from(agentStats).orderBy(desc(agentStats.winRate)).limit(limit);
-
-Does this address the comment?
-○ Yes - Continue to next
-○ No - Revise
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Does this address the comment?",
+    header: "Confirm",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Continue to next comment" },
+      { label: "No", description: "Revise the fix" },
+    ]
+  }]
+})
 
 **If "Skip":**
 
@@ -222,29 +261,49 @@ Current code:
 ```typescript
 const topAgents = agents.slice(0, 10);
 ```
-
-How would you like to proceed?
-○ Apply - Use constant
-○ Acknowledge - Good idea, will do
-○ Decline - Explain why not
-○ Skip - Address later
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to proceed?",
+    header: "Suggestion",
+    multiSelect: false,
+    options: [
+      { label: "Apply", description: "Use constant as suggested" },
+      { label: "Acknowledge", description: "Good idea, will do later" },
+      { label: "Decline", description: "Explain why not needed" },
+      { label: "Skip", description: "Address later" },
+    ]
+  }]
+})
 
 **If "Decline":**
 
+First, output the suggested response:
 ```
-Why decline this suggestion?
-> [user types or selects reason]
-
 Suggested response:
 "Thanks for the suggestion! I'm keeping it as-is because this is only used
 in one place and the limit is already parameterized in the query. Adding
 a constant here would be over-abstraction."
-
-Post this reply?
-○ Yes
-○ Edit first
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Post this reply?",
+    header: "Reply",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Post the suggested response" },
+      { label: "Edit first", description: "Modify the response before posting" },
+    ]
+  }]
+})
 
 ### Step 6: Handle Questions
 
@@ -271,12 +330,23 @@ Suggested response based on context:
 "The 5-second interval matches our game state polling. During active games,
 the leaderboard can change frequently as matches complete. Happy to make
 this configurable if you think it's too aggressive."
-
-How would you like to proceed?
-○ Post suggested response
-○ Edit and post
-○ Skip
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "How would you like to proceed?",
+    header: "Question",
+    multiSelect: false,
+    options: [
+      { label: "Post suggested", description: "Post the suggested response" },
+      { label: "Edit and post", description: "Modify before posting" },
+      { label: "Skip", description: "Address later" },
+    ]
+  }]
+})
 
 ### Step 7: Commit and Push Fixes
 
@@ -300,12 +370,23 @@ Commit message:
 
 - Add orderBy to getTopAgents query for index usage
 - Extract LEADERBOARD_LIMIT constant"
-
-Commit and push?
-○ Yes
-○ Edit message first
-○ Abort
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Commit and push these changes?",
+    header: "Commit",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Commit and push now" },
+      { label: "Edit message", description: "Modify commit message first" },
+      { label: "Abort", description: "Don't commit yet" },
+    ]
+  }]
+})
 
 ```bash
 git add -A
@@ -332,11 +413,20 @@ gh api graphql -f query='
 ' -f threadId="$threadId"
 ```
 
-```
-Resolve addressed comment threads?
-○ Yes - Mark 2 threads as resolved
-○ No - Let reviewer resolve
-```
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Resolve addressed comment threads?",
+    header: "Resolve",
+    multiSelect: false,
+    options: [
+      { label: "Yes", description: "Mark addressed threads as resolved" },
+      { label: "No", description: "Let reviewer resolve them" },
+    ]
+  }]
+})
 
 ### Step 9: Check Merge Readiness
 
@@ -360,13 +450,24 @@ Evaluate:
 ✓ PR approved by @reviewer1, @reviewer2
 ✓ CI passing
 ✓ No merge conflicts
-
-Ready to merge?
-○ Squash and merge (recommended)
-○ Merge commit
-○ Rebase and merge
-○ Not yet - Wait for more reviews
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "Ready to merge?",
+    header: "Merge",
+    multiSelect: false,
+    options: [
+      { label: "Squash and merge (Recommended)", description: "Combine commits into one" },
+      { label: "Merge commit", description: "Preserve all commits" },
+      { label: "Rebase and merge", description: "Linear history without merge commit" },
+      { label: "Not yet", description: "Wait for more reviews" },
+    ]
+  }]
+})
 
 **If merge blocked:**
 
@@ -378,11 +479,22 @@ Ready to merge?
 - ✓ No merge conflicts
 
 Waiting for @reviewer1 to re-review after your fixes.
-
-Options:
-○ Request re-review from @reviewer1
-○ Done for now - Exit peep
 ```
+
+Then use `AskUserQuestion`:
+
+```javascript
+AskUserQuestion({
+  questions: [{
+    question: "What would you like to do?",
+    header: "Blocked",
+    multiSelect: false,
+    options: [
+      { label: "Request re-review", description: "Ask @reviewer1 to re-review" },
+      { label: "Done for now", description: "Exit and wait for re-review" },
+    ]
+  }]
+})
 
 ```bash
 # Request re-review
