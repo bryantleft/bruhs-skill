@@ -16,6 +16,7 @@ Combined planning and building workflow. Wraps brainstorming and feature develop
 
 All code produced by cook follows the patterns defined in:
 
+- **`practices/type-driven-design.md`** - **PRIMARY** - Type signatures, explicit errors, immutability
 - **`practices/_common.md`** - Universal patterns (naming, git, errors, testing)
 - **`practices/typescript-react.md`** - TypeScript + React specific patterns
 
@@ -23,6 +24,9 @@ All code produced by cook follows the patterns defined in:
 
 | Principle | Description |
 |-----------|-------------|
+| **Types as Documentation** | Signatures should tell the full story |
+| **Explicit Errors** | Errors visible in return types, not hidden throws |
+| **Immutability** | Prefer readonly, don't mutate parameters |
 | **KISS** | Keep It Simple, Stupid |
 | **YAGNI** | You Ain't Gonna Need It |
 | **Single Source of Truth** | One authoritative source for each piece of data |
@@ -33,12 +37,17 @@ All code produced by cook follows the patterns defined in:
 - What anti-patterns to avoid (DON'T)
 - Quick reference checklists
 
+**Type-first design (from type-driven-design.md):**
+- **Explicit return types** on all public functions
+- **Errors in return types** - not hidden throws
+- **`readonly` parameters** - signal no mutation
+- No `any`, `!`, or `as` for external data
+- Union types for state machines (not multiple booleans)
+
 For TypeScript + React, key highlights:
 - Server Components by default (only `"use client"` when needed)
 - Avoid useEffect for derived state, data fetching, event responses
 - Const objects over enums
-- No `any`, `!`, or `as` for external data
-- Union types for state machines (not multiple booleans)
 
 ## Workflow
 

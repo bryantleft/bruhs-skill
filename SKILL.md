@@ -15,7 +15,7 @@ What do you want to do?
 ○ yeet - Ship: Linear ticket → Branch → Commit → PR
 ○ peep - Address PR review comments and merge
 ○ dip - Clean up after merge and switch to base branch
-○ slop - Clean up AI slop (senior engineer code review)
+○ slop - Clean up AI slop (type signatures first, senior engineer review)
 ```
 
 Present these options interactively, then follow the corresponding command file:

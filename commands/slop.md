@@ -18,6 +18,7 @@ Thoroughly analyze the entire codebase and clean up AI-generated code patterns. 
 > "AI slop is output that seems adequate on the surface but falls short in substance—code that appears syntactically correct but is missing depth, context, or relevance."
 
 This command embodies the mindset of a senior engineer who:
+- **Reads type signatures first** - Types are the primary documentation
 - Values simplicity over cleverness
 - Removes code rather than adds it
 - Questions every abstraction
@@ -28,29 +29,130 @@ This command embodies the mindset of a senior engineer who:
 
 Slop detects violations of the patterns defined in:
 
+- **`practices/type-driven-design.md`** - **PRIMARY** - Type signatures, explicit errors, immutability
 - **`practices/_common.md`** - Universal patterns (naming, git, errors, testing)
 - **`practices/typescript-react.md`** - TypeScript + React specific patterns
 
 **Read these files for the full pattern catalog.** The sections below summarize what slop detects.
 
-## The Eight Pillars
+## The Priority Hierarchy
 
-Slop analyzes code through eight critical lenses:
+**Type signatures are the #1 priority.** Fix type issues before anything else.
+
+| Priority | Category | Why |
+|----------|----------|-----|
+| **1** | Type Signatures | Types ARE the documentation |
+| **2** | Error Handling | Errors hidden from types = signature lies |
+| **3** | Immutability | Mutations hidden from types = surprise side effects |
+| **4** | Security | Can cause real damage |
+| **5** | Architecture | Structural issues compound |
+| **6** | Performance | Usually matters less than correctness |
+| **7** | Code Style | Nitpicks, but they add up |
+
+## The Analysis Pillars
+
+Slop analyzes code through these lenses, **in priority order**:
 
 | Pillar | Focus |
 |--------|-------|
-| **Functionality** | Does it actually work? Edge cases? |
-| **Readability** | Can a human understand this in 30 seconds? |
+| **Type Signatures** | Do signatures tell the full story? Are errors explicit? |
+| **Immutability** | Are mutations visible? Is state predictable? |
+| **Error Handling** | Graceful failures? Errors in return types? |
 | **Security** | SQL injection, XSS, hardcoded secrets? |
-| **Performance** | N+1 queries, unnecessary re-renders, bundle size? |
-| **Error Handling** | Graceful failures? Useful error messages? |
-| **Testing** | Testable? Actually tested? |
-| **Standards** | Consistent with codebase conventions? |
 | **Architecture** | Does it fit the system, or fight it? |
+| **Performance** | N+1 queries, unnecessary re-renders, bundle size? |
+| **Readability** | Can a human understand this in 30 seconds? |
+| **Standards** | Consistent with codebase conventions? |
 
 ## AI Slop Patterns
 
-> Full patterns with examples in `practices/typescript-react.md`
+> Full type-driven patterns in `practices/type-driven-design.md`
+> Stack-specific patterns in `practices/typescript-react.md`
+
+### Category 0: Type Signature Violations (HIGHEST PRIORITY)
+
+**The most important category.** Types are documentation. Bad types = misleading documentation.
+
+**0.1 Missing/Implicit Return Types**
+```typescript
+// SLOP: Return type inferred, readers must trace implementation
+const getUsers = async () => {
+  const res = await fetch('/api/users');
+  return res.json(); // What type? Promise<any>?
+};
+
+// CLEAN: Explicit return type documents the contract
+async function getUsers(): Promise<User[]> {
+  const res = await fetch('/api/users');
+  return userArraySchema.parse(await res.json());
+}
+```
+
+**0.2 Errors Hidden from Types**
+```typescript
+// SLOP: Throws are invisible - signature lies
+function parseConfig(text: string): Config {
+  return JSON.parse(text); // Can throw, but signature doesn't say so
+}
+
+// CLEAN: Error possibility explicit in return type
+function parseConfig(text: string): Config | ParseError {
+  try {
+    return configSchema.parse(JSON.parse(text));
+  } catch (e) {
+    return new ParseError(e.message);
+  }
+}
+
+// CLEAN: Or use Result type (better-result)
+function parseConfig(text: string): Result<Config, ParseError> {
+  return Result.try({
+    try: () => configSchema.parse(JSON.parse(text)),
+    catch: (e) => new ParseError(e.message),
+  });
+}
+```
+
+**0.3 Side Effects Hidden from Types**
+```typescript
+// SLOP: Signature doesn't reveal side effects
+function getUser(id: string): User {
+  logger.info(`Fetching user ${id}`);  // Hidden side effect
+  metrics.increment('user.fetch');      // Hidden side effect
+  return cache.get(id) ?? db.get(id);   // Hidden I/O
+}
+
+// CLEAN: Async signals I/O, name signals retrieval
+async function fetchUser(id: string): Promise<User | null> {
+  return userRepository.findById(id);
+}
+```
+
+**0.4 Overly Wide Types**
+```typescript
+// SLOP: String is too wide - loses information
+function getStatus(user: User): string {
+  return user.active ? 'active' : 'inactive';
+}
+
+// CLEAN: Narrow union type documents possibilities
+function getStatus(user: User): 'active' | 'inactive' {
+  return user.active ? 'active' : 'inactive';
+}
+```
+
+**0.5 Mutable Parameters Without Signal**
+```typescript
+// SLOP: Signature doesn't reveal mutation
+function sortUsers(users: User[]): User[] {
+  return users.sort((a, b) => a.name.localeCompare(b.name)); // Mutates input!
+}
+
+// CLEAN: readonly signals no mutation, returns new array
+function sortUsers(users: readonly User[]): User[] {
+  return [...users].sort((a, b) => a.name.localeCompare(b.name));
+}
+```
 
 ### Category 1: Over-Engineering (YAGNI Violations)
 
@@ -495,29 +597,51 @@ grep -rn "eval(" src/ --include="*.ts" --include="*.tsx"
 
 ### Step 4: Deep Code Analysis
 
-**Load practices for the stack:**
+**Load practices in priority order:**
 
 ```javascript
-// Determine stack from bruhs.json
+// ALWAYS load type-driven design first - it's the primary lens
+typePractices = Read('practices/type-driven-design.md');
+
+// Load common practices
+commonPractices = Read('practices/_common.md');
+
+// Determine stack from bruhs.json and load stack-specific practices
 const stack = config.stack?.framework || 'typescript';
 
-// Load relevant practices file
 if (['nextjs', 'react-native', 'tauri', 'electron'].includes(stack)) {
-  practices = Read('practices/typescript-react.md');
+  stackPractices = Read('practices/typescript-react.md');
 } else if (stack === 'fastapi') {
-  practices = Read('practices/python-fastapi.md');
+  stackPractices = Read('practices/python-fastapi.md');
 } else if (stack === 'hono') {
-  practices = Read('practices/typescript-hono.md');
+  stackPractices = Read('practices/typescript-hono.md');
 }
-
-// Always load common practices
-commonPractices = Read('practices/_common.md');
 ```
 
 For each file, analyze using the Task tool with code-explorer agent:
 
 ```
-Analyze this file for AI slop patterns.
+Analyze this file for AI slop patterns, IN PRIORITY ORDER:
+
+**PRIORITY 1 - Type Signatures (most important):**
+- Missing/implicit return types on public functions
+- Errors hidden from types (throws without return type signal)
+- Side effects hidden from types
+- Overly wide types (string when union would be specific)
+- Mutable parameters without readonly
+
+**PRIORITY 2 - Error Handling:**
+- Errors not in return types
+- String errors instead of typed errors
+- Empty catch blocks / swallowed errors
+- Deferred error handling
+
+**PRIORITY 3 - Immutability:**
+- Parameter mutation
+- Hidden state changes
+- Unnecessary cloning vs proper borrowing
+
+**PRIORITY 4 - Other Issues:**
 - Over-engineering (unnecessary abstractions, premature generalization)
 - TypeScript anti-patterns (any, !, as, redundant types)
 - React anti-patterns (derived state, multiple booleans, unnecessary effects)
@@ -527,7 +651,7 @@ Analyze this file for AI slop patterns.
 - Performance issues
 - Architectural violations
 
-Be extremely nitpicky. If you wouldn't approve this in a code review, flag it.
+Be extremely nitpicky. Type signature issues are the highest priority.
 ```
 
 ### Step 5: Pattern Correlation

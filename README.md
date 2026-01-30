@@ -119,7 +119,20 @@ Use this after your PR is merged to start fresh for the next feature.
 
 Deep codebase analysis and AI slop cleanup. Acts as a nitpicky senior engineer.
 
+**Priority hierarchy (type signatures first):**
+
+| Priority | Category |
+|----------|----------|
+| **1** | Type Signatures - missing return types, hidden errors, wide types |
+| **2** | Error Handling - errors not in types, swallowed errors |
+| **3** | Immutability - parameter mutation, hidden state changes |
+| **4** | Security - hardcoded secrets, injection vulnerabilities |
+| **5** | Architecture - circular deps, mixed abstraction levels |
+| **6** | Performance - N+1 queries, unnecessary re-renders |
+| **7** | Code Style - over-commenting, verbose names, dead code |
+
 **What it detects:**
+- **Type signature violations**: Missing return types, errors hidden from types, overly wide types, mutable parameters
 - **Over-engineering**: Unnecessary abstractions, premature generalization, factory abuse
 - **TypeScript anti-patterns**: `any` types, non-null assertions, type assertion abuse
 - **React anti-patterns**: Derived state bugs, multiple boolean state, unnecessary effects
@@ -155,13 +168,19 @@ Shared practices used by both `cook` (building) and `slop` (cleanup):
 
 ```
 practices/
-  _common.md           # Universal: naming, git, errors, testing
-  typescript-react.md  # TypeScript + React patterns
-  python-fastapi.md    # (planned) Python + FastAPI patterns
-  typescript-hono.md   # (planned) TypeScript + Hono patterns
-  rust.md              # (planned) Rust patterns
-  luau-roblox.md       # (planned) Luau/Roblox patterns
+  type-driven-design.md  # PRIMARY: Type signatures, errors, immutability
+  _common.md             # Universal: naming, git, errors, testing
+  typescript-react.md    # TypeScript + React patterns
+  python-fastapi.md      # (planned) Python + FastAPI patterns
+  typescript-hono.md     # (planned) TypeScript + Hono patterns
+  rust.md                # (planned) Rust patterns
+  luau-roblox.md         # (planned) Luau/Roblox patterns
 ```
+
+**Type-Driven Design** is the primary lens for all code analysis. Derived from:
+- **Scala FP** - Type signatures as documentation, pure functions
+- **Go** - Explicit error handling, errors as values
+- **Rust** - Immutability by default, ownership patterns
 
 The practices define:
 - **DO** patterns to follow
