@@ -358,35 +358,75 @@ AskUserQuestion({
   }]
 })
 
-### Step 3: Check Linear MCP
+### Step 3: Detect Linear MCP Servers
+
+Detect all available Linear MCP servers (supports multiple workspaces):
 
 ```javascript
-// Attempt to use Linear MCP
-try {
-  mcp__linear__list_teams()
-} catch {
-  console.log("Linear MCP not configured. Run `claude mcp add linear` to enable ticket management.")
+// Read MCP server config to find all Linear instances
+// Servers are named like: linear, linear-work, linear-personal, linear-sonner
+const mcpConfig = JSON.parse(Bash("cat ~/.claude/settings.json")).mcpServers
+const linearServers = Object.keys(mcpConfig).filter(name => name.startsWith('linear'))
+
+if (linearServers.length === 0) {
+  console.log("No Linear MCP configured. Run `claude mcp add linear -- npx @linear/mcp` to enable.")
   // Offer to continue without Linear
+  AskUserQuestion({
+    questions: [{
+      question: "Continue without Linear integration?",
+      header: "Linear",
+      multiSelect: false,
+      options: [
+        { label: "Yes, skip Linear", description: "Set up Linear later" },
+        { label: "No, I'll configure it", description: "Exit and set up Linear first" }
+      ]
+    }]
+  })
 }
 ```
 
-### Step 4: Select Linear Team and Create Project (if new repo and Linear available)
+### Step 4: Select Linear Workspace, Team, and Project
 
-**Always ask the user which team to use - never assume from previous config:**
+**If multiple Linear workspaces exist, ask which one to use:**
 
 ```javascript
-ToolSearch("select:mcp__linear__list_teams")
-ToolSearch("select:mcp__linear__list_projects")
-ToolSearch("select:mcp__linear__create_project")
+let selectedMcpServer = 'linear'  // default
 
-// Fetch available teams
-teams = mcp__linear__list_teams()
+if (linearServers.length > 1) {
+  // Multiple Linear workspaces available - ask user which one
+  const workspaceOptions = linearServers.slice(0, 4).map(server => ({
+    label: server.replace('linear-', '').replace('linear', 'default'),
+    description: `Use ${server} MCP server`
+  }))
+
+  AskUserQuestion({
+    questions: [{
+      question: "Which Linear workspace?",
+      header: "Workspace",
+      multiSelect: false,
+      options: workspaceOptions
+    }]
+  })
+
+  selectedMcpServer = userSelection  // e.g., 'linear-work'
+}
+
+// Now use the selected MCP server for all Linear operations
+// Tool names are dynamic: mcp__<server>__<method>
+// e.g., mcp__linear-work__list_teams, mcp__linear-sonner__list_teams
+
+ToolSearch(`select:mcp__${selectedMcpServer}__list_teams`)
+ToolSearch(`select:mcp__${selectedMcpServer}__list_projects`)
+ToolSearch(`select:mcp__${selectedMcpServer}__create_project`)
+
+// Fetch available teams from selected workspace
+teams = mcp__[selectedMcpServer]__list_teams()
 
 // Build team options dynamically
 const teamOptions = teams.slice(0, 4).map(t => ({
   label: t.name,
   description: t.key || "Linear team"
-}));
+}))
 
 // ALWAYS ask user to select team - don't default to previous
 AskUserQuestion({
@@ -399,7 +439,7 @@ AskUserQuestion({
 })
 
 // After team selected, ask if they want to create a new project or use existing
-existingProjects = mcp__linear__list_projects({ teamId: selectedTeam.id })
+existingProjects = mcp__[selectedMcpServer]__list_projects({ teamId: selectedTeam.id })
 
 if (existingProjects.length > 0) {
   const projectOptions = [
@@ -408,7 +448,7 @@ if (existingProjects.length > 0) {
       label: p.name,
       description: "Use existing project"
     }))
-  ];
+  ]
 
   AskUserQuestion({
     questions: [{
@@ -416,8 +456,7 @@ if (existingProjects.length > 0) {
       header: "Project",
       multiSelect: false,
       options: projectOptions
-    }]
-  })
+    }])
 } else {
   // No existing projects, create new one automatically
   console.log(`Creating new Linear project: ${projectName}`)
@@ -425,16 +464,29 @@ if (existingProjects.length > 0) {
 
 // Create project if "Create new project" selected
 if (createNewProject) {
-  mcp__linear__create_project({
+  mcp__[selectedMcpServer]__create_project({
     name: projectName,
     teamIds: [selectedTeam.id]
   })
 }
 ```
 
-Use Linear MCP to create project:
+**Store selected workspace in bruhs.json:**
+- `integrations.linear.mcpServer`: Which MCP server to use (e.g., `"linear-work"`)
 - Project name: `<project-name>`
 - Team: **From user selection (always ask)**
+
+**Setting up multiple Linear workspaces:**
+
+```bash
+# Add workspace with descriptive name
+claude mcp add linear-work -- npx @linear/mcp    # Will prompt for API key
+claude mcp add linear-personal -- npx @linear/mcp
+claude mcp add linear-sonner -- npx @linear/mcp
+
+# Or with API key directly (via env)
+LINEAR_API_KEY=lin_api_xxx claude mcp add linear-work -- npx @linear/mcp
+```
 
 ### Step 5: Create Initial Linear Tickets
 
@@ -479,7 +531,141 @@ cd apps/web && pnpm dlx shadcn@latest init --style base-mira --base-color neutra
 
 The `base-mira` style provides a clean, modern aesthetic. If user wants a different style, they can specify via "Other" in the styling selection.
 
-### Step 7: Create/Update bruhs.json
+### Step 7: Reconcile Tooling Conflicts
+
+Framework scaffolders install their own default tooling. Reconcile conflicts by removing tools that were superseded by user selections.
+
+**Tool Categories & Mutual Exclusivity:**
+
+| Category | Tools | Notes |
+|----------|-------|-------|
+| **Linting (JS/TS)** | ESLint, Biome | Only one linter |
+| **Formatting (JS/TS)** | Prettier, Biome, dprint | Only one formatter |
+| **Linting (Python)** | Ruff, Flake8, Pylint | Only one linter |
+| **Formatting (Python)** | Ruff, Black, autopep8 | Only one formatter |
+| **Linting (Rust)** | Clippy | Standard, no conflicts |
+| **Package Manager (JS)** | npm, yarn, pnpm, bun | Only one |
+| **Testing (JS/TS)** | Vitest, Jest | Only one unit test runner |
+| **Testing (E2E)** | Playwright, Cypress | Can coexist, but usually pick one |
+| **Type Checking (Python)** | ty, mypy, pyright, pytype | Can coexist, but usually pick one |
+
+**Reconciliation Logic:**
+
+```javascript
+// Define what each tool replaces
+const TOOL_SUPERSEDES = {
+  // JS/TS
+  'biome': ['eslint', 'prettier', 'eslint-config-*', '@eslint/*', 'prettier-*'],
+  'dprint': ['prettier', 'prettier-*'],
+  'vitest': ['jest', '@jest/*', 'ts-jest', 'babel-jest'],
+  'pnpm': ['package-lock.json', 'yarn.lock'],  // Lock files to remove
+  'yarn': ['package-lock.json', 'pnpm-lock.yaml'],
+  'bun': ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
+
+  // Python
+  'ruff': ['flake8', 'pylint', 'black', 'autopep8', 'isort', 'pyflakes', 'pycodestyle'],
+  'ty': ['mypy', 'pyright', 'pytype'],
+  'uv': ['pip', 'pipenv', 'poetry'],  // uv replaces these as package manager
+}
+
+// Files to remove when tool is superseded
+const TOOL_FILES = {
+  'eslint': ['.eslintrc', '.eslintrc.js', '.eslintrc.cjs', '.eslintrc.json', '.eslintrc.yml', 'eslint.config.js', 'eslint.config.mjs'],
+  'prettier': ['.prettierrc', '.prettierrc.js', '.prettierrc.json', '.prettierrc.yml', 'prettier.config.js', 'prettier.config.mjs'],
+  'jest': ['jest.config.js', 'jest.config.ts', 'jest.config.mjs', 'jest.setup.js', 'jest.setup.ts'],
+  'flake8': ['.flake8', 'setup.cfg'],  // setup.cfg may have flake8 config
+  'black': ['pyproject.toml'],  // Check for [tool.black] section
+  'mypy': ['mypy.ini', '.mypy.ini'],  // pyproject.toml may have [tool.mypy]
+  'pylint': ['.pylintrc', 'pylintrc'],
+}
+```
+
+**Execution:**
+
+```bash
+# 1. Identify what user selected
+selectedTools = userSelections.tooling  # e.g., ['biome', 'vitest']
+
+# 2. For each selected tool, find what it supersedes
+for tool in selectedTools:
+  superseded = TOOL_SUPERSEDES[tool] || []
+
+  for oldTool in superseded:
+    # Remove from package.json dependencies
+    # Handles glob patterns like 'eslint-config-*'
+    pnpm remove $(pnpm list --json | jq -r '.dependencies | keys[] | select(test("^eslint"))')
+
+    # Remove config files
+    for file in TOOL_FILES[oldTool]:
+      rm -f $file
+
+# 3. Remove superseded lock files
+if selectedPackageManager == 'pnpm':
+  rm -f package-lock.json yarn.lock bun.lockb
+
+# 4. Update package.json scripts to use selected tools
+# e.g., replace "lint": "eslint ." with "lint": "biome check ."
+```
+
+**Script Updates:**
+
+| If Selected | Replace Script | With |
+|-------------|---------------|------|
+| Biome | `"lint": "eslint ."` | `"lint": "biome check ."` |
+| Biome | `"format": "prettier --write ."` | `"format": "biome format --write ."` |
+| Biome | `"lint": "next lint"` | `"lint": "biome check ."` |
+| Vitest | `"test": "jest"` | `"test": "vitest"` |
+| Ruff | `"lint": "flake8"` | `"lint": "ruff check ."` |
+| Ruff | `"format": "black ."` | `"format": "ruff format ."` |
+
+**Framework-Specific Handling:**
+
+| Framework | Default Tooling | If Biome Selected |
+|-----------|-----------------|-------------------|
+| Next.js | eslint, eslint-config-next | Remove both, add `biome.json` with Next.js rules |
+| Create React App | eslint (built-in) | Eject or use CRACO to disable |
+| Vite | None by default | No conflict |
+| Astro | None by default | No conflict |
+| TanStack Start | None by default | No conflict |
+
+**Biome Config for Next.js:**
+
+When Biome replaces ESLint in a Next.js project, create `biome.json`:
+
+```json
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "organizeImports": { "enabled": true },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "useExhaustiveDependencies": "warn",
+        "useHookAtTopLevel": "error"
+      },
+      "a11y": {
+        "recommended": true
+      }
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded"
+    }
+  }
+}
+```
+
+This mirrors the key rules from `eslint-config-next` (React hooks, a11y).
+
+### Step 8: Create/Update bruhs.json
 
 Create `.claude/bruhs.json` with selected configuration:
 
@@ -487,10 +673,11 @@ Create `.claude/bruhs.json` with selected configuration:
 {
   "integrations": {
     "linear": {
-      "team": "<selected-team-id>",      // From Step 4 user selection
-      "teamName": "<selected-team-name>", // For display
-      "project": "<selected-project-id>", // From Step 4 user selection
-      "projectName": "<selected-project-name>", // For display
+      "mcpServer": "<selected-mcp-server>", // e.g., "linear", "linear-work", "linear-sonner"
+      "team": "<selected-team-id>",
+      "teamName": "<selected-team-name>",
+      "project": "<selected-project-id>",
+      "projectName": "<selected-project-name>",
       "labels": {
         "feat": "Feature",
         "fix": "Bug",
@@ -528,7 +715,7 @@ cat ~/.claude/settings.json | jq '.enabledPlugins | keys'  # Enabled plugins
 
 The `tooling` section stores what's recommended for this project. New devs can compare against their setup and install missing ones.
 
-### Step 8: Recommend Skills (using find-skills)
+### Step 9: Recommend Skills (using find-skills)
 
 Use `find-skills` to recommend relevant skills based on selected stack:
 
@@ -579,7 +766,7 @@ Install selected skills:
 npx skills add <owner/repo> --skill <skill-name>
 ```
 
-### Step 9: Setup GitHub Actions
+### Step 10: Setup GitHub Actions
 
 Create `.github/workflows/ci.yml` with Blacksmith runner:
 
@@ -617,14 +804,6 @@ Adjust based on language:
 - Python: Use `uv` and `pytest`
 - Rust: Use `cargo` commands
 - Luau: Use `selene` and `stylua`
-
-### Step 10: Initial Commit
-
-```bash
-git init  # if new project
-git add -A
-git commit -m "chore: initial project setup with <framework>"
-```
 
 ## Example: New Project
 
@@ -669,10 +848,7 @@ Setting up GitHub Actions...
 Creating config...
 ✓ Created .claude/bruhs.json
 
-Initial commit...
-✓ chore: initial project setup with Next.js
-
-Done! 🚀
+Done! Ready to commit when you are.
 ```
 
 ## Example: Add to Monorepo

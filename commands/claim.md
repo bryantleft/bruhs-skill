@@ -42,19 +42,32 @@ AskUserQuestion({
 
 ```bash
 # Check for monorepo indicators
-ls turbo.json pnpm-workspace.yaml 2>/dev/null
+ls turbo.json pnpm-workspace.yaml nx.json lerna.json 2>/dev/null
 
-# Check for framework indicators
+# Check for framework indicators at root
 ls next.config.* nuxt.config.* astro.config.* 2>/dev/null
+
+# For monorepos, check all apps/* directories
+ls apps/*/next.config.* apps/*/astro.config.* apps/*/nuxt.config.* 2>/dev/null
 
 # Check package.json for clues
 cat package.json | jq '.dependencies, .devDependencies'
 ```
 
 Auto-detect what's possible:
-- **structure**: monorepo if turbo.json/pnpm-workspace.yaml exists
-- **framework**: next.config.* → nextjs, etc.
-- **styling**: tailwind.config.* → tailwind, components/ui → shadcn
+
+**For single projects:**
+- **structure**: "single"
+- **framework**: next.config.* → "Next.js", astro.config.* → "Astro", etc.
+
+**For monorepos:**
+- **structure**: "monorepo" if turbo.json/pnpm-workspace.yaml/nx.json exists
+- **frameworks**: Array of all frameworks found in apps/* directories
+  - e.g., `["Next.js", "Astro"]` if apps/web has astro.config.* and apps/agents has next.config.*
+- **tooling**: Include "Turborepo" or "Nx" based on config file
+
+**Common detection:**
+- **styling**: tailwind.config.* → Tailwind CSS, components/ui or packages/ui → shadcn/ui
 - **database**: drizzle.config.* → drizzle, prisma/ → prisma
 - **testing**: vitest.config.* → vitest, jest.config.* → jest
 - **tooling**: biome.json → biome, .eslintrc → eslint
@@ -169,13 +182,18 @@ skillsMap = {
   "shadcn": ["shadcn"],                          // styling includes shadcn
   "vercel-ai-sdk": ["vercel-ai-sdk"],            // ai: vercel-ai-sdk
   "better-auth": ["better-auth-best-practices"], // auth: better-auth
-  "nextjs": ["vercel-react-best-practices"],     // framework: nextjs
+  "nextjs": ["vercel-react-best-practices"],     // framework/frameworks includes Next.js
 }
 
 if (stack.styling?.includes("shadcn")) detectedSkills.push("shadcn")
 if (stack.ai === "vercel-ai-sdk") detectedSkills.push("vercel-ai-sdk")
 if (stack.auth === "better-auth") detectedSkills.push("better-auth-best-practices")
-if (stack.framework === "nextjs") detectedSkills.push("vercel-react-best-practices")
+
+// Handle both single (framework) and monorepo (frameworks) structures
+const frameworks = stack.frameworks || (stack.framework ? [stack.framework] : [])
+if (frameworks.some(f => f.toLowerCase().includes("next"))) {
+  detectedSkills.push("vercel-react-best-practices")
+}
 
 // Verify skills actually exist
 Skill("find-skills")  // Use to validate detected skills
@@ -192,6 +210,7 @@ Detecting relevant skills...
 
 Create `.claude/bruhs.json`:
 
+**For single projects:**
 ```json
 {
   "integrations": {
@@ -211,7 +230,7 @@ Create `.claude/bruhs.json`:
     "skills": ["<detected-skills>"]
   },
   "stack": {
-    "structure": "<detected>",
+    "structure": "single",
     "framework": "<detected>",
     "styling": ["<detected>"],
     "database": ["<detected>"],
@@ -231,6 +250,38 @@ Create `.claude/bruhs.json`:
   }
 }
 ```
+
+**For monorepos:** Use `frameworks` (array) instead of `framework` (string):
+```json
+{
+  "integrations": { ... },
+  "tooling": { ... },
+  "stack": {
+    "structure": "monorepo",
+    "frameworks": ["Next.js", "Astro"],
+    "styling": ["Tailwind CSS", "shadcn/ui"],
+    "database": ["<detected>"],
+    "auth": null,
+    "libraries": ["<detected>"],
+    "state": "<detected>",
+    "animation": null,
+    "ai": "<detected>",
+    "workers": null,
+    "payments": null,
+    "email": null,
+    "testing": ["<detected>"],
+    "tooling": ["Turborepo"],
+    "infra": ["<detected>"],
+    "observability": [],
+    "llmObservability": null
+  }
+}
+```
+
+**Key differences for monorepos:**
+- `structure`: "monorepo" instead of "single"
+- `frameworks`: Array of all frameworks used across apps (not `framework`)
+- `tooling`: Include "Turborepo" or "Nx" if detected
 
 If Linear not configured, omit the `linear` section from integrations.
 
@@ -258,13 +309,34 @@ Ready! You can now use /bruhs cook and /bruhs yeet.
 
 ## Stack Detection Reference
 
+### Structure Detection
+
 | File/Pattern | Detected As |
 |--------------|-------------|
-| `next.config.*` | framework: nextjs |
-| `nuxt.config.*` | framework: nuxt |
-| `astro.config.*` | framework: astro |
-| `tailwind.config.*` | styling: tailwind |
-| `components/ui/` | styling: shadcn |
+| `turbo.json` | structure: monorepo, tooling: Turborepo |
+| `pnpm-workspace.yaml` | structure: monorepo |
+| `nx.json` | structure: monorepo, tooling: Nx |
+| `lerna.json` | structure: monorepo |
+
+### Framework Detection
+
+For **single projects**, detect one framework → `framework: "nextjs"`
+For **monorepos**, scan all `apps/*/` directories → `frameworks: ["Next.js", "Astro"]`
+
+| File/Pattern | Detected As |
+|--------------|-------------|
+| `next.config.*` | Next.js |
+| `nuxt.config.*` | Nuxt |
+| `astro.config.*` | Astro |
+| `remix.config.*` | Remix |
+| `vite.config.*` (no framework) | Vite |
+
+### Other Detection
+
+| File/Pattern | Detected As |
+|--------------|-------------|
+| `tailwind.config.*` | styling: Tailwind CSS |
+| `components/ui/` or `packages/ui/` | styling: shadcn/ui |
 | `drizzle.config.*` | database: drizzle-postgres |
 | `prisma/schema.prisma` | database: prisma |
 | `convex/` | database: convex |
@@ -286,7 +358,9 @@ Ready! You can now use /bruhs cook and /bruhs yeet.
 | `Dockerfile` | infra: docker |
 | `railway.json` | infra: railway |
 
-## Example
+## Examples
+
+### Single Project
 
 ```
 > /bruhs claim
@@ -295,31 +369,58 @@ Checking for existing config...
 ✓ No existing config found
 
 Detecting project structure...
-✓ Monorepo: No (single package)
+✓ Structure: single
 ✓ Framework: Next.js (next.config.ts found)
-✓ Styling: Tailwind, shadcn (tailwind.config.ts, components/ui/)
-✓ Database: Drizzle + Postgres (drizzle.config.ts)
-✓ Testing: Vitest (vitest.config.ts)
-✓ Tooling: Biome, Husky (biome.json, .husky/)
+✓ Styling: Tailwind CSS, shadcn/ui
+✓ Database: Drizzle + Postgres
+✓ Testing: Vitest
+✓ Tooling: Biome, Husky
 
 Checking Linear MCP...
 ✓ Linear available
 
-Which Linear team?
-○ Perdix Labs ← selected
-
-Which Linear project?
-○ Gambit ← selected
+Which Linear team? [Perdix Labs]
+Which Linear project? [Gambit]
 
 Detecting relevant skills...
-✓ Found: superpowers (workflow patterns)
-✓ Found: feature-dev (code explorer/reviewer)
-✓ Found: commit-commands (git workflows)
-✓ Found: shadcn (component library)
-✓ Found: vercel-react-best-practices (React/Next.js patterns)
+✓ Found: superpowers, feature-dev, commit-commands
+✓ Found: shadcn, vercel-react-best-practices
 
-Confirm detected stack? [Y/n]
-> Y
+Confirm detected stack? [Y/n] Y
+
+Creating config...
+✓ Created .claude/bruhs.json
+
+Ready! You can now use /bruhs cook and /bruhs yeet.
+```
+
+### Monorepo
+
+```
+> /bruhs claim
+
+Checking for existing config...
+✓ No existing config found
+
+Detecting project structure...
+✓ Structure: monorepo (turbo.json, pnpm-workspace.yaml)
+✓ Frameworks: Next.js (apps/agents), Astro (apps/web)
+✓ Styling: Tailwind CSS, shadcn/ui (packages/ui)
+✓ Database: none detected
+✓ Testing: none detected
+✓ Tooling: Turborepo
+
+Checking Linear MCP...
+✓ Linear available
+
+Which Linear team? [leftautomated]
+Which Linear project? [leftautomated]
+
+Detecting relevant skills...
+✓ Found: superpowers, feature-dev, commit-commands
+✓ Found: shadcn, vercel-react-best-practices
+
+Confirm detected stack? [Y/n] Y
 
 Creating config...
 ✓ Created .claude/bruhs.json
