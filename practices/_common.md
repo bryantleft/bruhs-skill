@@ -339,6 +339,51 @@ pnpm outdated
 
 ---
 
+## External Searches
+
+### Always Include Current Date
+
+When using `WebSearch` or `WebFetch` for documentation, best practices, or any external information, **always include the current year** in the query to get up-to-date results.
+
+```javascript
+// ✅ Include current date for fresh results
+const currentYear = new Date().getFullYear(); // e.g., 2026
+
+WebSearch({ query: `React Server Components best practices ${currentYear}` })
+WebSearch({ query: `Next.js 15 app router documentation ${currentYear}` })
+WebSearch({ query: `TypeScript 5 features ${currentYear}` })
+
+// ✅ For WebFetch prompts, mention recency
+WebFetch({
+  url: "https://docs.example.com/api",
+  prompt: `Extract the latest API changes as of ${currentYear}`
+})
+
+// ❌ Queries without date context may return stale results
+WebSearch({ query: `React Server Components best practices` })
+WebSearch({ query: `Next.js app router documentation` })
+```
+
+### Why This Matters
+
+- Documentation and best practices evolve rapidly
+- Search results without date context may prioritize older, higher-ranked content
+- Framework versions change—what was best practice in 2024 may be outdated in 2026
+- Libraries deprecate features and introduce breaking changes
+
+### When to Include Date
+
+| Scenario | Include Date? |
+|----------|---------------|
+| Documentation lookups | ✅ Yes |
+| Best practices research | ✅ Yes |
+| Framework/library guides | ✅ Yes |
+| API references | ✅ Yes |
+| Error message lookups | ✅ Yes (bugs get fixed) |
+| General knowledge (math, algorithms) | ❌ No |
+
+---
+
 ## Quick Reference
 
 ### Universal Checklist
