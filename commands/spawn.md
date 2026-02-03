@@ -360,30 +360,25 @@ AskUserQuestion({
 
 ### Step 3: Detect Linear MCP Servers
 
-Detect all available Linear MCP servers (supports multiple workspaces via `mcp-server-linear` with `TOOL_PREFIX`):
+Detect all available Linear MCP servers (supports multiple workspaces via `mcp-server-linear`):
 
 ```javascript
 // Read MCP server config to find all Linear instances
 // Servers are named like: linear-perdix, linear-bnle, linear-sonner
-// Each has a TOOL_PREFIX that prefixes all tool names (e.g., sonner_list_teams)
-const mcpConfig = JSON.parse(Bash("cat ~/.claude/settings.json")).mcpServers
-const linearServers = Object.entries(mcpConfig)
-  .filter(([name, config]) => name.startsWith('linear'))
-  .map(([name, config]) => ({
-    name,
-    prefix: config.env?.TOOL_PREFIX || name.replace('linear-', '')
-  }))
+// Tool names are: mcp__<server-name>__linear_<method>
+const mcpConfig = JSON.parse(Bash("cat ~/.claude.json")).mcpServers
+const linearServers = Object.keys(mcpConfig).filter(name => name.startsWith('linear'))
 
 if (linearServers.length === 0) {
   console.log("No Linear MCP configured.")
-  console.log("Add a workspace: edit ~/.claude/settings.json and add:")
+  console.log("Add a workspace: edit ~/.claude.json mcpServers and add:")
   console.log(`
     "linear-myworkspace": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "mcp-server-linear"],
       "env": {
-        "LINEAR_ACCESS_TOKEN": "lin_api_xxx",
-        "TOOL_PREFIX": "myworkspace"
+        "LINEAR_ACCESS_TOKEN": "lin_api_xxx"
       }
     }
   `)
@@ -428,19 +423,17 @@ if (linearServers.length > 1) {
   selectedServer = linearServers.find(s => s.prefix === userSelection)
 }
 
-// Tool names use the TOOL_PREFIX: mcp__<mcp-server-name>__<prefix>_<method>
-// e.g., mcp__linear-sonner__sonner_list_teams
-const mcpName = selectedServer.name    // e.g., "linear-sonner"
-const prefix = selectedServer.prefix   // e.g., "sonner"
+// Tool names are: mcp__<server-name>__linear_<method>
+// e.g., mcp__linear-sonner__linear_get_teams
+const mcpName = selectedServer  // e.g., "linear-sonner"
 
 // Load the tools for the selected workspace
-ToolSearch(`select:mcp__${mcpName}__${prefix}_list_teams`)
-ToolSearch(`select:mcp__${mcpName}__${prefix}_list_projects`)
-ToolSearch(`select:mcp__${mcpName}__${prefix}_create_project`)
+ToolSearch(`select:mcp__${mcpName}__linear_get_teams`)
+ToolSearch(`select:mcp__${mcpName}__linear_list_projects`)
+ToolSearch(`select:mcp__${mcpName}__linear_create_project`)
 
 // Fetch available teams from selected workspace
-// Call the tool dynamically based on prefix
-teams = call(`mcp__${mcpName}__${prefix}_list_teams`)
+teams = call(`mcp__${mcpName}__linear_get_teams`)
 
 // Build team options dynamically
 const teamOptions = teams.slice(0, 4).map(t => ({
@@ -459,7 +452,7 @@ AskUserQuestion({
 })
 
 // After team selected, ask if they want to create a new project or use existing
-existingProjects = call(`mcp__${mcpName}__${prefix}_list_projects`, { teamId: selectedTeam.id })
+existingProjects = call(`mcp__${mcpName}__linear_list_projects`, { teamId: selectedTeam.id })
 
 if (existingProjects.length > 0) {
   const projectOptions = [
@@ -484,7 +477,7 @@ if (existingProjects.length > 0) {
 
 // Create project if "Create new project" selected
 if (createNewProject) {
-  call(`mcp__${mcpName}__${prefix}_create_project`, {
+  call(`mcp__${mcpName}__linear_create_project`, {
     name: projectName,
     teamIds: [selectedTeam.id]
   })
@@ -493,36 +486,39 @@ if (createNewProject) {
 
 **Store selected workspace in bruhs.json:**
 - `integrations.linear.mcpServer`: Which MCP server to use (e.g., `"linear-sonner"`)
-- `integrations.linear.toolPrefix`: The TOOL_PREFIX (e.g., `"sonner"`)
 - Project name: `<project-name>`
 - Team: **From user selection (always ask)**
 
 **Setting up multiple Linear workspaces:**
 
-Uses `mcp-server-linear` npm package with `TOOL_PREFIX` for each workspace.
-Edit `~/.claude/settings.json`:
+Uses `mcp-server-linear` npm package. Each workspace gets its own MCP server entry.
+Edit `~/.claude.json` (the MCP config file):
 
 ```json
 {
   "mcpServers": {
     "linear-perdix": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "mcp-server-linear"],
       "env": {
-        "LINEAR_ACCESS_TOKEN": "lin_api_xxx",
-        "TOOL_PREFIX": "perdix"
+        "LINEAR_ACCESS_TOKEN": "lin_api_xxx"
       }
     },
     "linear-sonner": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "mcp-server-linear"],
       "env": {
-        "LINEAR_ACCESS_TOKEN": "lin_api_yyy",
-        "TOOL_PREFIX": "sonner"
+        "LINEAR_ACCESS_TOKEN": "lin_api_yyy"
       }
     }
   }
 }
+
+**Tool naming:** Tools are always `mcp__<server-name>__linear_<method>`, e.g.:
+- `mcp__linear-sonner__linear_get_teams`
+- `mcp__linear-perdix__linear_create_issue`
 ```
 
 **Get your Linear API key:**
@@ -716,7 +712,6 @@ Create `.claude/bruhs.json` with selected configuration:
   "integrations": {
     "linear": {
       "mcpServer": "<selected-mcp-server>", // e.g., "linear-sonner"
-      "toolPrefix": "<tool-prefix>",        // e.g., "sonner" - used for tool names like sonner_list_teams
       "team": "<selected-team-id>",
       "teamName": "<selected-team-name>",
       "project": "<selected-project-id>",

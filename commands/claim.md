@@ -76,18 +76,13 @@ Auto-detect what's possible:
 
 ```javascript
 // Read MCP server config to find all Linear instances
-// Uses mcp-server-linear with TOOL_PREFIX for multi-workspace support
-const mcpConfig = JSON.parse(Bash("cat ~/.claude/settings.json")).mcpServers
-const linearServers = Object.entries(mcpConfig)
-  .filter(([name, config]) => name.startsWith('linear'))
-  .map(([name, config]) => ({
-    name,
-    prefix: config.env?.TOOL_PREFIX || name.replace('linear-', '')
-  }))
+// Config is in ~/.claude.json (the MCP config file)
+const mcpConfig = JSON.parse(Bash("cat ~/.claude.json")).mcpServers
+const linearServers = Object.keys(mcpConfig).filter(name => name.startsWith('linear'))
 
 if (linearServers.length === 0) {
   console.log("No Linear MCP configured (optional).")
-  console.log("To add: edit ~/.claude/settings.json with mcp-server-linear")
+  console.log("To add: edit ~/.claude.json mcpServers with mcp-server-linear")
   linearAvailable = false
 } else {
   linearAvailable = true
@@ -104,8 +99,8 @@ let selectedServer = linearServers[0]  // default to first
 // If multiple workspaces, ask which one
 if (linearServers.length > 1) {
   const workspaceOptions = linearServers.slice(0, 4).map(server => ({
-    label: server.prefix,
-    description: `Use ${server.name} MCP server`
+    label: server,
+    description: `Use ${server} MCP server`
   }))
 
   AskUserQuestion({
@@ -117,18 +112,18 @@ if (linearServers.length > 1) {
     }]
   })
 
-  selectedServer = linearServers.find(s => s.prefix === userSelection)
+  selectedServer = userSelection
 }
 
-const mcpName = selectedServer.name    // e.g., "linear-sonner"
-const prefix = selectedServer.prefix   // e.g., "sonner"
+const mcpName = selectedServer    // e.g., "linear-sonner"
 
 // Load tools for selected workspace
-ToolSearch(`select:mcp__${mcpName}__${prefix}_list_teams`)
-ToolSearch(`select:mcp__${mcpName}__${prefix}_list_projects`)
+// Tool format: mcp__<server-name>__linear_<method>
+ToolSearch(`select:mcp__${mcpName}__linear_get_teams`)
+ToolSearch(`select:mcp__${mcpName}__linear_list_projects`)
 
 // Fetch teams
-teams = call(`mcp__${mcpName}__${prefix}_list_teams`)
+teams = call(`mcp__${mcpName}__linear_get_teams`)
 
 // Build team options dynamically
 const teamOptions = teams.slice(0, 4).map(t => ({
@@ -146,7 +141,7 @@ AskUserQuestion({
 })
 
 // After team selected, get projects and ask
-projects = call(`mcp__${mcpName}__${prefix}_list_projects`, { teamId: selectedTeam.id })
+projects = call(`mcp__${mcpName}__linear_list_projects`, { teamId: selectedTeam.id })
 
 const projectOptions = projects.slice(0, 4).map(p => ({
   label: p.name,
@@ -195,8 +190,8 @@ AskUserQuestion({
 ### Step 6: Detect Installed Tooling
 
 ```bash
-# Check user's Claude settings for installed MCPs
-cat ~/.claude/settings.json 2>/dev/null
+# Check user's Claude MCP config for installed MCPs
+cat ~/.claude.json 2>/dev/null
 ```
 
 Extract:
@@ -253,7 +248,6 @@ Create `.claude/bruhs.json`:
   "integrations": {
     "linear": {
       "mcpServer": "<selected-mcp-server>",  // e.g., "linear-sonner"
-      "toolPrefix": "<tool-prefix>",          // e.g., "sonner"
       "team": "<selected-team-id>",
       "teamName": "<selected-team-name>",
       "project": "<selected-project-id>",

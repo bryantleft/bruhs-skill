@@ -93,12 +93,12 @@ if (!linearConfig?.mcpServer) {
   // Fall back to treating input as feature description
 } else {
   const mcpName = linearConfig.mcpServer    // e.g., "linear-sonner"
-  const prefix = linearConfig.toolPrefix    // e.g., "sonner"
 
   // Load Linear MCP and fetch the ticket
-  ToolSearch(`select:mcp__${mcpName}__${prefix}_get_issue`)
+  // Tool format: mcp__<server-name>__linear_<method>
+  ToolSearch(`select:mcp__${mcpName}__linear_get_issue`)
 
-  issue = call(`mcp__${mcpName}__${prefix}_get_issue`, { id: ticketId })
+  issue = call(`mcp__${mcpName}__linear_get_issue`, { id: ticketId })
 
   // Store ticket context for yeet
   ticketContext = {

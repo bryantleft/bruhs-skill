@@ -246,9 +246,83 @@ AskUserQuestion({
 
 For multi-select prompts (like stack additions), `multiSelect: true` allows selecting multiple options.
 
-## Dependencies
+## Linear MCP Setup
 
-- **Linear MCP** (optional) - For ticket management. Run `claude mcp add linear` to enable.
+Linear integration is optional but enables full ticket management. Uses `mcp-server-linear` for multi-workspace support.
+
+### Quick Setup (Single Workspace)
+
+1. **Get your Linear API key:**
+   - Go to Linear → Settings → API → Personal API Keys
+   - Click "Create key", give it a label (e.g., "Claude MCP")
+   - Copy the key (starts with `lin_api_`)
+
+2. **Add to `~/.claude.json`:**
+   ```json
+   {
+     "mcpServers": {
+       "linear-myworkspace": {
+         "type": "stdio",
+         "command": "npx",
+         "args": ["-y", "mcp-server-linear"],
+         "env": {
+           "LINEAR_ACCESS_TOKEN": "lin_api_xxx"
+         }
+       }
+     }
+   }
+   ```
+
+3. **Restart Claude Code** to load the MCP server.
+
+### Multi-Workspace Setup
+
+For multiple Linear workspaces (e.g., different companies or projects), add each as a separate MCP server:
+
+```json
+{
+  "mcpServers": {
+    "linear-perdix": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-server-linear"],
+      "env": {
+        "LINEAR_ACCESS_TOKEN": "lin_api_xxx"
+      }
+    },
+    "linear-sonner": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-server-linear"],
+      "env": {
+        "LINEAR_ACCESS_TOKEN": "lin_api_yyy"
+      }
+    }
+  }
+}
+```
+
+**Tool naming:** Tools are always `mcp__<server-name>__linear_<method>`:
+- `mcp__linear-sonner__linear_get_teams`
+- `mcp__linear-perdix__linear_create_issue`
+
+Each project's `.claude/bruhs.json` stores which workspace to use:
+```json
+{
+  "integrations": {
+    "linear": {
+      "mcpServer": "linear-sonner"
+    }
+  }
+}
+```
+
+### Verify Setup
+
+Run `/mcp` in Claude Code to see connected servers. You should see your Linear servers listed.
+
+## Other Dependencies
+
 - **GitHub CLI** - For PR creation. Authenticate with `gh auth login`.
 
 ## License

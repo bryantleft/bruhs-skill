@@ -91,15 +91,13 @@ if (!linearConfig?.mcpServer) {
   console.log("Linear not configured in bruhs.json.")
   linearAvailable = false
 } else {
-  // Build tool names using the prefix
-  // Tool format: mcp__<mcpServer>__<prefix>_<method>
+  // Tool format: mcp__<mcpServer>__linear_<method>
   const mcpName = linearConfig.mcpServer    // e.g., "linear-sonner"
-  const prefix = linearConfig.toolPrefix    // e.g., "sonner"
 
   try {
     // Load the tools for this workspace
-    ToolSearch(`select:mcp__${mcpName}__${prefix}_list_teams`)
-    call(`mcp__${mcpName}__${prefix}_list_teams`)
+    ToolSearch(`select:mcp__${mcpName}__linear_get_teams`)
+    call(`mcp__${mcpName}__linear_get_teams`)
     linearAvailable = true
   } catch {
     console.log("Linear MCP not connected.")
@@ -147,27 +145,18 @@ if (ticketContext) {
 ```javascript
 // Get Linear config from bruhs.json
 const mcpName = linearConfig.mcpServer    // e.g., "linear-sonner"
-const prefix = linearConfig.toolPrefix    // e.g., "sonner"
 
-// Load Linear tools (prefixed with workspace)
-ToolSearch(`select:mcp__${mcpName}__${prefix}_create_issue`)
-ToolSearch(`select:mcp__${mcpName}__${prefix}_list_issue_labels`)
-
-// Fetch available labels from Linear (dynamic)
-availableLabels = call(`mcp__${mcpName}__${prefix}_list_issue_labels`, { teamId: linearConfig.team })
+// Load Linear tools
+ToolSearch(`select:mcp__${mcpName}__linear_create_issue`)
 
 // Get the label name from config (e.g., "feat" -> "Feature")
 labelName = linearConfig.labels[changeType]
 
-// Find matching label in available labels (case-insensitive)
-labelId = availableLabels.find(l => l.name.toLowerCase() === labelName.toLowerCase())?.id
-
 // Create issue (auto-assigns to current user)
-issue = call(`mcp__${mcpName}__${prefix}_create_issue`, {
+issue = call(`mcp__${mcpName}__linear_create_issue`, {
   title: generatedTitle,
   teamId: linearConfig.team,
   projectId: linearConfig.project,
-  labelIds: labelId ? [labelId] : [],
   assigneeId: "me"
 })
 
@@ -280,10 +269,10 @@ EOF
 ### Step 9: Update Linear Status (if available)
 
 ```javascript
-// Load and call update_issue with workspace prefix
-ToolSearch(`select:mcp__${mcpName}__${prefix}_update_issue`)
+// Load and call edit_issue
+ToolSearch(`select:mcp__${mcpName}__linear_edit_issue`)
 
-call(`mcp__${mcpName}__${prefix}_update_issue`, {
+call(`mcp__${mcpName}__linear_edit_issue`, {
   issueId: issue.id,
   stateId: "in-review"  // Or find the "In Review" state ID
 })
@@ -349,8 +338,7 @@ Reads `.claude/bruhs.json`:
 {
   "integrations": {
     "linear": {
-      "mcpServer": "linear-sonner",     // MCP server name from settings.json
-      "toolPrefix": "sonner",            // TOOL_PREFIX for this workspace
+      "mcpServer": "linear-sonner",     // MCP server name from ~/.claude.json
       "team": "<team-id>",
       "teamName": "Sonner",
       "project": "<project-id>",
@@ -366,9 +354,9 @@ Reads `.claude/bruhs.json`:
 }
 ```
 
-The `labels` map commit types to Linear label names. At runtime, yeet fetches available labels from Linear and matches by name.
+The `labels` map commit types to Linear label names.
 
-**Multi-workspace setup:** Each project's bruhs.json points to its specific Linear workspace via `mcpServer` and `toolPrefix`. Tool names are dynamically constructed as `mcp__<mcpServer>__<toolPrefix>_<method>`.
+**Multi-workspace setup:** Each project's bruhs.json points to its specific Linear workspace via `mcpServer`. Tool names are always `mcp__<mcpServer>__linear_<method>` (e.g., `mcp__linear-sonner__linear_create_issue`).
 
 ## Git-Only Mode
 
