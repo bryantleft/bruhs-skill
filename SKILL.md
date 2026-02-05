@@ -41,11 +41,11 @@ description: Opinionated development lifecycle - spawn projects, cook features, 
 ### Checklist
 **Signatures:**
 - [ ] Explicit return types on public functions
-- [ ] No `any` - use `unknown` + validation
-- [ ] No `!` - handle null explicitly
-- [ ] No `as` for external data - validate instead
+- [ ] No **any** - use unknown + validation
+- [ ] No **!** - handle null explicitly
+- [ ] No **as** for external data - validate instead
 - [ ] Errors in return type, not thrown silently
-- [ ] `readonly` parameters signal no mutation
+- [ ] **readonly** parameters signal no mutation
 - [ ] Discriminated unions for state (not multiple booleans)
 
 **Errors:**
@@ -55,7 +55,7 @@ description: Opinionated development lifecycle - spawn projects, cook features, 
 - [ ] No empty catch blocks
 
 **Immutability:**
-- [ ] Prefer `const` over `let`
+- [ ] Prefer **const** over **let**
 - [ ] Don't mutate parameters
 - [ ] Return new objects instead of mutating
 
