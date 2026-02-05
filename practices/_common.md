@@ -175,33 +175,71 @@ try {
 
 ## Git Practices
 
-### Commit Messages
+### Commit Messages (Conventional Commits)
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
 ```
-<type>: <description>
+<type>(<scope>): <description>
 
 [optional body]
 
 [optional footer]
 ```
 
-Types:
-- `feat` - New feature
-- `fix` - Bug fix
-- `refactor` - Code change that neither fixes bug nor adds feature
-- `chore` - Maintenance, config, dependencies
-- `docs` - Documentation
-- `test` - Tests
-- `style` - Formatting (no code change)
+**Format rules:**
+- Type and description are **required**
+- Scope is optional but recommended for larger codebases
+- Description should be lowercase, imperative mood ("add" not "added" or "adds")
+- No period at end of description
+- Body provides context on the "why" (wrap at 72 chars)
+
+**Types:**
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `feat` | New feature | `feat(auth): add OAuth2 login flow` |
+| `fix` | Bug fix | `fix(api): handle null response from server` |
+| `refactor` | Code restructuring (no behavior change) | `refactor(utils): extract date formatting` |
+| `chore` | Maintenance, config, deps | `chore(deps): update effect to 3.15` |
+| `docs` | Documentation only | `docs(readme): add setup instructions` |
+| `test` | Adding/updating tests | `test(auth): add login edge case coverage` |
+| `style` | Formatting, whitespace (no logic change) | `style: fix indentation in config files` |
+| `perf` | Performance improvement | `perf(query): add database index for users` |
+| `ci` | CI/CD changes | `ci: add automated release workflow` |
+| `build` | Build system changes | `build: update webpack config` |
+
+**Breaking changes:**
+- Add `!` after type/scope: `feat(api)!: change response format`
+- Or add `BREAKING CHANGE:` in footer
+
+**Examples:**
 
 ```
-feat: add user authentication flow
+feat(scouts): add parallel action space mapping
 
-- Implement login/logout with JWT
-- Add protected route middleware
-- Create auth context for client state
+Implement Scout System to map web page elements before agent acts:
+- 4 parallel scouts (interactive, modal, form, navigation)
+- XSS-safe selector generation with CSS.escape
+- Visibility filtering and 200 element limit
 
-Fixes PROJ-123
+Closes #123
+```
+
+```
+fix(auth): prevent session fixation on login
+
+Regenerate session ID after successful authentication to prevent
+session fixation attacks.
+
+BREAKING CHANGE: existing sessions will be invalidated
+```
+
+```
+chore(deps): update effect-ts to 3.15
+
+- Adds new Schema.TaggedError features
+- Fixes layer composition edge case
 ```
 
 ### Branch Names
