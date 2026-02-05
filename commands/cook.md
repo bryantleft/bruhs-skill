@@ -19,6 +19,7 @@ All code produced by cook follows the patterns defined in:
 - **`practices/type-driven-design.md`** - **PRIMARY** - Type signatures, explicit errors, immutability
 - **`practices/_common.md`** - Universal patterns (naming, git, errors, testing)
 - **`practices/typescript-react.md`** - TypeScript + React specific patterns
+- **`practices/effect-ts.md`** - Effect-TS specific patterns (loaded when `effect` in `stack.libraries`)
 
 **Key principles:**
 
@@ -141,11 +142,23 @@ Scope: <what's included/excluded>
 
 ### Step 2: Explore
 
+**Load practices based on stack:**
+
+```javascript
+// Load bruhs.json for stack info
+config = readJson(".claude/bruhs.json")
+
+// Load Effect practices if stack uses Effect
+if (config.stack?.libraries?.includes('effect')) {
+  effectPractices = Read('practices/effect-ts.md');
+  console.log("✓ Loaded Effect-TS practices")
+}
+```
+
 **Load project skills from bruhs.json:**
 
 ```javascript
 // Load skills already configured for this project
-config = readJson(".claude/bruhs.json")
 projectSkills = config.tooling?.skills || []
 
 // Load each configured skill

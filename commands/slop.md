@@ -32,6 +32,7 @@ Slop detects violations of the patterns defined in:
 - **`practices/type-driven-design.md`** - **PRIMARY** - Type signatures, explicit errors, immutability
 - **`practices/_common.md`** - Universal patterns (naming, git, errors, testing)
 - **`practices/typescript-react.md`** - TypeScript + React specific patterns
+- **`practices/effect-ts.md`** - Effect-TS specific patterns (loaded when `effect` in `stack.libraries`)
 
 **Read these files for the full pattern catalog.** The sections below summarize what slop detects.
 
@@ -615,6 +616,11 @@ if (['nextjs', 'react-native', 'tauri', 'electron'].includes(stack)) {
   stackPractices = Read('practices/python-fastapi.md');
 } else if (stack === 'hono') {
   stackPractices = Read('practices/typescript-hono.md');
+}
+
+// Load Effect practices if stack uses Effect
+if (config.stack?.libraries?.includes('effect')) {
+  effectPractices = Read('practices/effect-ts.md');
 }
 ```
 
